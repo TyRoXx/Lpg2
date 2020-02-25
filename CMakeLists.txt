@@ -40,7 +40,7 @@ if(UNIX)
         -Wrestrict
         -Wnull-dereference
         -Wdouble-promotion
-        -Wshadow
+        #-Wshadow
         -fstrict-aliasing
         -Wformat=2
         -Wuseless-cast
@@ -59,5 +59,6 @@ endif()
 
 include_directories(.)
 
+add_subdirectory(lpg2)
 add_subdirectory(benchmarks)
 add_subdirectory(tests)
