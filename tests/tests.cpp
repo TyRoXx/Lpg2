@@ -24,11 +24,6 @@ BOOST_AUTO_TEST_CASE(empty)
     BOOST_TEST(lpg::run_result{""} == lpg::run(""));
 }
 
-BOOST_AUTO_TEST_CASE(syntax_error)
-{
-    BOOST_TEST(lpg::run_result{std::nullopt} == lpg::run(" "));
-}
-
 BOOST_AUTO_TEST_CASE(print_nothing)
 {
     BOOST_TEST(lpg::run_result{""} == lpg::run(R"aaa(print(""))aaa"));

@@ -1,3 +1,5 @@
+#pragma once
+
 #include <cassert>
 #include <optional>
 #include <string_view>
@@ -33,6 +35,8 @@ namespace lpg
         char const *next;
         char const *end;
 
+        std::optional<token> peeked;
+
         explicit scanner(std::string_view source)
             : next(source.data())
             , end(source.end())
@@ -41,9 +45,10 @@ namespace lpg
 
         bool is_at_the_end() const
         {
-            return (next == end);
+            return (next == end) && !peeked;
         }
 
         [[nodiscard]] std::optional<token> pop();
+        [[nodiscard]] std::optional<token> peek();
     };
 }

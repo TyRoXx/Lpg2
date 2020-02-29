@@ -1,8 +1,10 @@
 #pragma once
 
+#include "parser.h"
 #include <optional>
 #include <ostream>
 #include <string_view>
+#include <variant>
 
 namespace lpg
 {
@@ -29,6 +31,19 @@ namespace lpg
             return out << "error";
         }
     };
+
+    enum class builtin_functions
+    {
+        print
+    };
+
+    using value = std::variant<std::string, builtin_functions, std::nullptr_t>;
+
+    value evaluate_call(call const &function, std::string &output);
+
+    void evaluate_sequence(sequence const &to_evaluate, std::string &output);
+
+    value evaluate(expression const &to_evaluate, std::string &output);
 
     [[nodiscard]] run_result run(std::string_view source);
 }

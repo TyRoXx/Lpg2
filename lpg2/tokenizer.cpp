@@ -2,17 +2,31 @@
 
 std::optional<lpg::token> lpg::scanner::pop()
 {
+    auto result = peek();
+    peeked = std::nullopt;
+    return result;
+}
+
+std::optional<lpg::token> lpg::scanner::peek()
+{
+    if (peeked)
+    {
+        return peeked;
+    }
+
     assert(!is_at_the_end());
     char const head = *next;
     if (head == '(')
     {
         ++next;
-        return token{special_character::left_parenthesis};
+        peeked = token{special_character::left_parenthesis};
+        return peeked;
     }
     if (head == ')')
     {
         ++next;
-        return token{special_character::right_parenthesis};
+        peeked = token{special_character::right_parenthesis};
+        return peeked;
     }
     if (head == '"')
     {
@@ -32,7 +46,8 @@ std::optional<lpg::token> lpg::scanner::pop()
         }
         char const *literal_end = next;
         ++next;
-        return token{string_literal{std::string_view(literal_begin, literal_end - literal_begin)}};
+        peeked = token{string_literal{std::string_view(literal_begin, literal_end - literal_begin)}};
+        return peeked;
     }
     if (is_identifier_letter(head))
     {
@@ -42,7 +57,9 @@ std::optional<lpg::token> lpg::scanner::pop()
         {
             ++next;
         }
-        return token{identifier{std::string_view(identifier_begin, next - identifier_begin)}};
+        peeked = token{identifier{std::string_view(identifier_begin, next - identifier_begin)}};
+        return peeked;
     }
-    return std::nullopt;
+    peeked = std::nullopt;
+    return peeked;
 }

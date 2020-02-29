@@ -1,4 +1,6 @@
 #include "program.h"
+#include "overloaded.h"
+#include "parser.h"
 #include "tokenizer.h"
 #include <cassert>
 #include <variant>
@@ -6,99 +8,61 @@
 
 namespace lpg
 {
-    struct print
+    sequence compile(std::string_view source)
     {
-        std::string message;
-    };
-
-    struct sequence
-    {
-        std::vector<print> elements;
-    };
-
-    template <class... Ts>
-    struct overloaded : Ts...
-    {
-        using Ts::operator()...;
-    };
-
-    template <class... Ts>
-    overloaded(Ts...)->overloaded<Ts...>;
-
-    token expect_token(scanner &tokens)
-    {
-        if (tokens.is_at_the_end())
-        {
-            throw std::invalid_argument("unexpected end of input");
-        }
-        std::optional<token> head = tokens.pop();
-        if (!head)
-        {
-            throw std::invalid_argument("expected token");
-        }
-        return std::move(*head);
-    }
-
-    void expect_special_character(scanner &tokens, special_character expected)
-    {
-        std::visit(overloaded{[](identifier const &) { throw std::invalid_argument("unexpected identifier"); },
-                              [expected](special_character found) {
-                                  if (expected == found)
-                                  {
-                                      return;
-                                  }
-                                  throw std::invalid_argument("unexpected special character");
-                              },
-                              [](string_literal) { throw std::invalid_argument("unexpected string"); }},
-                   expect_token(tokens));
-    }
-
-    print compile_print(scanner &tokens)
-    {
-        expect_special_character(tokens, special_character::left_parenthesis);
-        return std::visit(
-            overloaded{[](identifier const &) -> print { throw std::invalid_argument("unexpected identifier"); },
-                       [](special_character) -> print { throw std::invalid_argument("unexpected special character"); },
-                       [&tokens](string_literal message) -> print {
-                           expect_special_character(tokens, special_character::right_parenthesis);
-                           return print{std::string(message.inner_content)};
-                       }},
-            expect_token(tokens));
-    }
-
-    std::optional<sequence> compile(std::string_view source)
-    {
-        sequence result;
         scanner tokens{source};
-        for (;;)
-        {
-            if (tokens.is_at_the_end())
-            {
-                break;
-            }
-            std::optional<token> head = tokens.pop();
-            if (!head)
-            {
-                return std::nullopt;
-            }
-            result.elements.emplace_back(std::visit(
-                overloaded{
-                    [&tokens](identifier const &callee) -> print {
-                        if (callee.content == "print")
-                        {
-                            return compile_print(tokens);
-                        }
-                        else
-                        {
-                            throw std::invalid_argument("unknown function");
-                        }
-                    },
-                    [](special_character) -> print { throw std::invalid_argument("unexpected special character"); },
-                    [](string_literal) -> print { throw std::invalid_argument("unexpected string"); }},
-                *head));
-        }
-        return std::move(result);
+        return parse_sequence(tokens);
     }
+}
+
+lpg::value lpg::evaluate_call(call const &function, std::string &output)
+{
+    value const callee = evaluate(*function.callee, output);
+    value const argument = evaluate(*function.argument, output);
+
+    std::visit(
+        overloaded{
+            [&output](builtin_functions const callee, std::string const &argument) {
+                switch (callee)
+                {
+                case builtin_functions::print:
+                    output += argument;
+                    break;
+                }
+            },
+            [](auto const &, auto const &) {
+                throw std::invalid_argument("Wrong call arguments. Or function is not callable");
+            },
+        },
+        callee, argument);
+    return nullptr;
+}
+
+void lpg::evaluate_sequence(sequence const &to_evaluate, std::string &output)
+{
+    for (expression const &element : to_evaluate.elements)
+    {
+        evaluate(element, output);
+    }
+}
+
+lpg::value lpg::evaluate(expression const &to_evaluate, std::string &output)
+{
+    return std::visit(
+        overloaded{[](string_literal constant) -> value { return value{std::string{constant.inner_content}}; },
+                   [](identifier name) -> value {
+                       if (name.content == "print")
+                       {
+                           return builtin_functions::print;
+                       }
+                       throw std::invalid_argument("Unknown function");
+                   },
+                   [&output](call const &function) -> value { return evaluate_call(function, output); },
+                   [&output](sequence const &list) -> value {
+                       evaluate_sequence(list, output);
+                       return nullptr;
+                   }},
+        to_evaluate.value);
 }
 
 lpg::run_result lpg::run(std::string_view source)
@@ -109,9 +73,6 @@ lpg::run_result lpg::run(std::string_view source)
         return run_result{std::nullopt};
     }
     std::string output;
-    for (print const &element : program->elements)
-    {
-        output += element.message;
-    }
+    evaluate_sequence(*program, output);
     return run_result{std::move(output)};
 }
