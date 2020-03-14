@@ -2,9 +2,7 @@
 #include "overloaded.h"
 #include "parser.h"
 #include "tokenizer.h"
-#include <cassert>
 #include <variant>
-#include <vector>
 
 namespace lpg
 {
@@ -67,12 +65,8 @@ lpg::value lpg::evaluate(expression const &to_evaluate, std::string &output)
 
 lpg::run_result lpg::run(std::string_view source)
 {
-    std::optional<sequence> program = compile(source);
-    if (!program)
-    {
-        return run_result{std::nullopt};
-    }
+    sequence program = compile(source);
     std::string output;
-    evaluate_sequence(*program, output);
+    evaluate_sequence(program, output);
     return run_result{std::move(output)};
 }
