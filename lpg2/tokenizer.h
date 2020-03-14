@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <optional>
+#include <ostream>
 #include <string_view>
 #include <variant>
 
@@ -17,6 +18,12 @@ namespace lpg
         left_parenthesis,
         right_parenthesis
     };
+
+    inline std::basic_ostream<char> &operator<<(std::basic_ostream<char> &out, lpg::special_character value)
+    {
+        out << static_cast<int>(value);
+        return out;
+    }
 
     struct string_literal
     {
