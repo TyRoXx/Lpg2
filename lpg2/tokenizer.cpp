@@ -28,6 +28,37 @@ std::optional<lpg::token> lpg::scanner::peek()
         peeked = token{special_character::right_parenthesis};
         return peeked;
     }
+    if (head == '/')
+    {
+        ++next;
+
+        if (*next == '/')
+        {
+            ++next;
+            char const *literal_begin = next;
+            for (;;)
+            {
+                if (next == end || *next == '\n')
+                {
+                    break;
+                }
+                ++next;
+            }
+            char const *literal_end = next;
+            if (*next == '\n')
+            {
+                ++next;
+            }
+            peeked = token{comment{std::string_view(literal_begin, literal_end - literal_begin)}};
+            return peeked;
+        }
+        else
+        {
+            ++next;
+            peeked = token{special_character::slash};
+            return peeked;
+        }
+    }
     if (head == '"')
     {
         ++next;

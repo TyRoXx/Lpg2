@@ -74,6 +74,36 @@ BOOST_AUTO_TEST_CASE(parse_identifier)
     BOOST_TEST(id.content == "test");
 }
 
+BOOST_AUTO_TEST_CASE(parse_comment)
+{
+    auto s = lpg::scanner("//Just a comment");
+    std::optional<lpg::token> const t = s.pop();
+    BOOST_TEST(s.is_at_the_end());
+    BOOST_TEST(t.has_value());
+
+    lpg::comment comment = std::get<lpg::comment>(t.value());
+    BOOST_TEST(comment.inner_content == "Just a comment");
+}
+
+BOOST_AUTO_TEST_CASE(test_skipping_comments_at_the_end)
+{
+    auto s = lpg::scanner("//Just a comment\n");
+    std::optional<lpg::non_comment> const t = lpg::peek_next_non_comment(s);
+    BOOST_TEST(s.is_at_the_end());
+    BOOST_TEST(!t.has_value());
+}
+
+BOOST_AUTO_TEST_CASE(test_skipping_comments)
+{
+    auto s = lpg::scanner("//Just a comment\ntest");
+    std::optional<lpg::non_comment> const t = lpg::peek_next_non_comment(s);
+    BOOST_TEST(!s.is_at_the_end());
+    BOOST_TEST(t.has_value());
+
+    lpg::identifier id = std::get<lpg::identifier>(t.value());
+    BOOST_TEST(id.content == "test");
+}
+
 BOOST_AUTO_TEST_CASE(test_print_special_char)
 {
     std::stringstream s;

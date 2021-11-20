@@ -8,6 +8,8 @@
 
 namespace lpg
 {
+    using non_comment = std::variant<identifier, special_character, string_literal>;
+
     struct print
     {
         std::string message;
@@ -30,6 +32,8 @@ namespace lpg
     {
         std::variant<string_literal, identifier, call, sequence> value;
     };
+
+    std::optional<non_comment> peek_next_non_comment(scanner &tokens);
 
     token expect_token(scanner &tokens);
 
