@@ -16,7 +16,8 @@ namespace lpg
     enum class special_character
     {
         left_parenthesis,
-        right_parenthesis
+        right_parenthesis,
+        slash
     };
 
     inline std::basic_ostream<char> &operator<<(std::basic_ostream<char> &out, lpg::special_character value)
@@ -30,7 +31,12 @@ namespace lpg
         std::string_view inner_content;
     };
 
-    using token = std::variant<identifier, special_character, string_literal>;
+    struct comment
+    {
+        std::string_view inner_content;
+    };
+
+    using token = std::variant<identifier, special_character, string_literal, comment>;
 
     inline bool is_identifier_letter(char c)
     {

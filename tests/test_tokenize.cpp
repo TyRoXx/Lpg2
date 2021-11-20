@@ -4,6 +4,7 @@
 BOOST_AUTO_TEST_CASE(scan_nothing)
 {
     auto s = lpg::scanner("");
+    BOOST_TEST(!s.peek());
     BOOST_TEST(s.is_at_the_end());
 }
 
@@ -70,6 +71,58 @@ BOOST_AUTO_TEST_CASE(scan_identifier)
     std::optional<lpg::token> const t = s.pop();
     BOOST_TEST(s.is_at_the_end());
     BOOST_TEST(t.has_value());
+    lpg::identifier id = std::get<lpg::identifier>(t.value());
+    BOOST_TEST(id.content == "test");
+}
+
+BOOST_AUTO_TEST_CASE(scan_slash)
+{
+    auto s = lpg::scanner("/ 2");
+
+    std::optional<lpg::token> const t = s.pop();
+    BOOST_TEST(!s.is_at_the_end());
+    BOOST_TEST(t.has_value());
+    lpg::special_character const slash = std::get<lpg::special_character>(t.value());
+    BOOST_TEST(slash == lpg::special_character::slash);
+}
+
+BOOST_AUTO_TEST_CASE(scan_slash_end_of_file)
+{
+    auto s = lpg::scanner("/");
+
+    std::optional<lpg::token> const t = s.pop();
+    BOOST_TEST(s.is_at_the_end());
+    BOOST_TEST(t.has_value());
+    lpg::special_character const slash = std::get<lpg::special_character>(t.value());
+    BOOST_TEST(slash == lpg::special_character::slash);
+}
+
+BOOST_AUTO_TEST_CASE(scan_comment_end_of_file)
+{
+    auto s = lpg::scanner("//Just a comment");
+    std::optional<lpg::token> const t = s.pop();
+    BOOST_TEST(s.is_at_the_end());
+    BOOST_TEST(t.has_value());
+
+    lpg::comment comment = std::get<lpg::comment>(t.value());
+    BOOST_TEST(comment.inner_content == "Just a comment");
+}
+
+BOOST_AUTO_TEST_CASE(scan_comment_end_of_line)
+{
+    auto s = lpg::scanner("//Just a comment\n");
+    std::optional<lpg::non_comment> const t = lpg::peek_next_non_comment(s);
+    BOOST_TEST(s.is_at_the_end());
+    BOOST_TEST(!t.has_value());
+}
+
+BOOST_AUTO_TEST_CASE(scan_comment)
+{
+    auto s = lpg::scanner("//Just a comment\ntest");
+    std::optional<lpg::non_comment> const t = lpg::peek_next_non_comment(s);
+    BOOST_TEST(!s.is_at_the_end());
+    BOOST_TEST(t.has_value());
+
     lpg::identifier id = std::get<lpg::identifier>(t.value());
     BOOST_TEST(id.content == "test");
 }
