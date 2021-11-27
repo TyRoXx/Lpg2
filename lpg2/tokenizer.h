@@ -32,13 +32,13 @@ namespace lpg
 
     struct scanner
     {
-        char const *next;
-        char const *end;
+        std::string_view::iterator next;
+        std::string_view::iterator end;
 
         std::optional<token> peeked;
 
         explicit scanner(std::string_view source)
-            : next(source.data())
+            : next(source.begin())
             , end(source.end())
         {
         }
@@ -51,4 +51,4 @@ namespace lpg
         [[nodiscard]] std::optional<token> pop();
         [[nodiscard]] std::optional<token> peek();
     };
-}
+} // namespace lpg

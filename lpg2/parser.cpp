@@ -1,5 +1,16 @@
 #include "parser.h"
 #include "overloaded.h"
+#include <stdexcept>
+
+#ifdef _MSC_VER
+#define LPG_UNREACHABLE()                                                                                              \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        __assume(false);                                                                                               \
+    } while (false)
+#else
+#define LPG_UNREACHABLE() __builtin_unreachable()
+#endif
 
 namespace lpg
 {
@@ -50,7 +61,7 @@ namespace lpg
                                       case special_character::right_parenthesis:
                                           throw std::invalid_argument("Can not have a closing parenthesis here.");
                                       }
-                                      __builtin_unreachable();
+                                      LPG_UNREACHABLE();
                                   },
                                   [](string_literal const &literal) -> expression { return expression{literal}; }},
                        *next_token);
@@ -72,7 +83,7 @@ namespace lpg
                            case special_character::right_parenthesis:
                                return std::move(left_side);
                            }
-                           __builtin_unreachable();
+                           LPG_UNREACHABLE();
                        },
                        [&left_side](string_literal const &) -> expression { return std::move(left_side); }},
             *right_side);
@@ -104,4 +115,4 @@ namespace lpg
         return expression{
             call{std::make_unique<expression>(std::move(callee)), std::make_unique<expression>(std::move(argument))}};
     }
-}
+} // namespace lpg

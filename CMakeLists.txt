@@ -1,8 +1,9 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.15)
 project(Lpg2 LANGUAGES CXX)
 
 if(MSVC)
     set(VCPKG_TARGET_TRIPLET x64-windows-static)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 include(vcpkg/scripts/buildsystems/vcpkg.cmake)
 
@@ -55,6 +56,14 @@ if(UNIX)
         -Wstrict-overflow=5
         -std=c++17
     )
+endif()
+
+if(MSVC)
+    add_definitions(/std:c++17)
+    # disable the useless "warnings"
+    add_definitions(/Wall /WX /wd4514 /wd4710 /wd4820 /wd5031 /wd4625 /wd4626 /wd5027 /wd4464 /wd4668 /wd4623 /wd5243 /wd4619 /wd5026 /wd4266 /wd4371 /wd4866)
+    # 'return': conversion from '__int64' to 'size_t', signed/unsigned mismatch
+    add_definitions(/wd4365)
 endif()
 
 include_directories(.)

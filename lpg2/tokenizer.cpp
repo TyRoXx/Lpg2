@@ -1,4 +1,5 @@
 #include "tokenizer.h"
+#include <stdexcept>
 
 std::optional<lpg::token> lpg::scanner::pop()
 {
@@ -31,7 +32,7 @@ std::optional<lpg::token> lpg::scanner::peek()
     if (head == '"')
     {
         ++next;
-        char const *literal_begin = next;
+        std::string_view::iterator literal_begin = next;
         for (;;)
         {
             if (next == end)
@@ -44,20 +45,20 @@ std::optional<lpg::token> lpg::scanner::peek()
             }
             ++next;
         }
-        char const *literal_end = next;
+        std::string_view::iterator literal_end = next;
         ++next;
-        peeked = token{string_literal{std::string_view(literal_begin, literal_end - literal_begin)}};
+        peeked = token{string_literal{std::string_view(&*literal_begin, literal_end - literal_begin)}};
         return peeked;
     }
     if (is_identifier_letter(head))
     {
-        char const *identifier_begin = next;
+        std::string_view::iterator identifier_begin = next;
         ++next;
         while ((next != end) && is_identifier_letter(*next))
         {
             ++next;
         }
-        peeked = token{identifier{std::string_view(identifier_begin, next - identifier_begin)}};
+        peeked = token{identifier{std::string_view(&*identifier_begin, next - identifier_begin)}};
         return peeked;
     }
     peeked = std::nullopt;
