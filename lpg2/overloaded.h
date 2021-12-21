@@ -9,5 +9,5 @@ namespace lpg
     };
 
     template <class... Ts>
-    overloaded(Ts...)->overloaded<Ts...>;
-}
+    overloaded(Ts...) -> overloaded<Ts...>;
+} // namespace lpg

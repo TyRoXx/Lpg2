@@ -46,4 +46,4 @@ namespace lpg
     value evaluate(expression const &to_evaluate, std::string &output);
 
     [[nodiscard]] run_result run(std::string_view source);
-}
+} // namespace lpg

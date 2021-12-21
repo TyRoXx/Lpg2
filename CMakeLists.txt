@@ -66,6 +66,16 @@ if(MSVC)
     add_definitions(/wd4365)
 endif()
 
+find_program(LPG2_CLANG_FORMAT NAMES clang-format PATHS "C:/Program Files/LLVM/bin")
+if(LPG2_CLANG_FORMAT)
+    file(GLOB_RECURSE formatted
+        benchmarks/**.cpp benchmarks/**.h
+        tests/**.cpp tests/**.h
+        lpg2/**.cpp lpg2/**.h
+    )
+    add_custom_target(clang-format COMMAND "${LPG2_CLANG_FORMAT}" -i ${formatted} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+endif()
+
 include_directories(.)
 
 add_subdirectory(lpg2)

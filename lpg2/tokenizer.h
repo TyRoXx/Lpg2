@@ -1,11 +1,11 @@
 #pragma once
 
 #include <cassert>
+#include <compare>
 #include <optional>
 #include <ostream>
 #include <string_view>
 #include <variant>
-#include <compare>
 
 namespace lpg
 {
@@ -15,7 +15,7 @@ namespace lpg
         std::weak_ordering operator<=>(identifier const &other) const noexcept = default;
     };
 
-     std::ostream &operator<<(std::ostream &out,const lpg::identifier& value);
+    std::ostream &operator<<(std::ostream &out, const lpg::identifier &value);
 
     enum class special_character
     {
@@ -25,7 +25,7 @@ namespace lpg
         assign
     };
 
-     std::ostream &operator<<(std::ostream &out, lpg::special_character value);
+    std::ostream &operator<<(std::ostream &out, lpg::special_character value);
 
     struct string_literal
     {
@@ -69,12 +69,10 @@ namespace lpg
         [[nodiscard]] std::optional<token> peek();
     };
 
-    template <class ...T>
+    template <class... T>
     std::ostream &operator<<(std::ostream &out, const std::variant<T...> &value)
     {
-        std::visit(
-            [&out, &value](const auto &element) { out << value.index() << ": " << element; },
-            value);
+        std::visit([&out, &value](const auto &element) { out << value.index() << ": " << element; }, value);
         return out;
     }
 } // namespace lpg

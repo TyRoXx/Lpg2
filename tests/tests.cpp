@@ -11,7 +11,7 @@ namespace
         buffer << value;
         return buffer.str();
     }
-}
+} // namespace
 
 BOOST_AUTO_TEST_CASE(print_run_result)
 {
