@@ -77,6 +77,28 @@ namespace lpg
                    expect_token(tokens));
     }
 
+    identifier expect_identifier(scanner &tokens)
+    {
+        return std::visit(
+            overloaded{
+                [](identifier &&identifier_) -> identifier { return std::move(identifier_); },
+                [](special_character) -> identifier { throw std::invalid_argument("unexpected special character"); },
+                [](string_literal) -> identifier { throw std::invalid_argument("unexpected string"); },
+                [](comment) -> identifier { throw std::invalid_argument("unexpected comment"); }},
+            expect_token(tokens));
+    }
+
+    namespace
+    {
+        declaration parse_declaration(scanner &tokens)
+        {
+            identifier name = expect_identifier(tokens);
+            expect_special_character(tokens, special_character::assign);
+            expression initializer = parse_expression(tokens);
+            return declaration{name, std::make_unique<expression>(std::move(initializer))};
+        }
+    } // namespace
+
     expression parse_expression(scanner &tokens)
     {
         std::optional<non_comment> const next_token = pop_next_non_comment(tokens);
@@ -86,17 +108,24 @@ namespace lpg
         }
 
         expression left_side =
-            std::visit(overloaded{[](identifier const &callee) -> expression { return expression{callee}; },
+            std::visit(overloaded{[&tokens](identifier const &callee) -> expression {
+                                      if (callee.content == "let")
+                                      {
+                                          return expression{parse_declaration(tokens)};
+                                      }
+                                      return expression{callee};
+                                  },
                                   [&tokens](special_character character) -> expression {
                                       switch (character)
                                       {
                                       case special_character::left_parenthesis:
                                           return parse_parentheses(tokens);
-
                                       case special_character::right_parenthesis:
                                           throw std::invalid_argument("Can not have a closing parenthesis here.");
                                       case special_character::slash:
-                                          throw std::invalid_argument("Can not have a slash here.");    
+                                          throw std::invalid_argument("Can not have a slash here.");
+                                      case special_character::assign:
+                                          throw std::invalid_argument("Can not have an assignment operator here.");
                                       }
                                       LPG_UNREACHABLE();
                                   },
@@ -116,11 +145,12 @@ namespace lpg
                            {
                            case special_character::left_parenthesis:
                                return parse_call(std::move(left_side), tokens);
-
                            case special_character::right_parenthesis:
                                return std::move(left_side);
-                            case special_character::slash:
-                                    throw std::invalid_argument("Can't have a slash here");
+                           case special_character::slash:
+                               throw std::invalid_argument("Can't have a slash here");
+                           case special_character::assign:
+                               throw std::invalid_argument("Can not have an assignment operator here.");
                            }
                            LPG_UNREACHABLE();
                        },

@@ -21,7 +21,8 @@ namespace lpg
     {
         left_parenthesis,
         right_parenthesis,
-        slash
+        slash,
+        assign
     };
 
      std::ostream &operator<<(std::ostream &out, lpg::special_character value);

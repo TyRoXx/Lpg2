@@ -11,28 +11,27 @@ namespace lpg
         scanner tokens{source};
         return parse_sequence(tokens);
     }
-}
+} // namespace lpg
 
 lpg::value lpg::evaluate_call(call const &function, std::string &output)
 {
     value const callee = evaluate(*function.callee, output);
     value const argument = evaluate(*function.argument, output);
 
-    std::visit(
-        overloaded{
-            [&output](builtin_functions const callee, std::string const &argument) {
-                switch (callee)
-                {
-                case builtin_functions::print:
-                    output += argument;
-                    break;
-                }
-            },
-            [](auto const &, auto const &) {
-                throw std::invalid_argument("Wrong call arguments. Or function is not callable");
-            },
-        },
-        callee, argument);
+    std::visit(overloaded{
+                   [&output](builtin_functions const callee, std::string const &argument) {
+                       switch (callee)
+                       {
+                       case builtin_functions::print:
+                           output += argument;
+                           break;
+                       }
+                   },
+                   [](auto const &, auto const &) {
+                       throw std::invalid_argument("Wrong call arguments. Or function is not callable");
+                   },
+               },
+               callee, argument);
     return nullptr;
 }
 
@@ -58,6 +57,12 @@ lpg::value lpg::evaluate(expression const &to_evaluate, std::string &output)
                    [&output](call const &function) -> value { return evaluate_call(function, output); },
                    [&output](sequence const &list) -> value {
                        evaluate_sequence(list, output);
+                       return nullptr;
+                   },
+                   [&output](declaration const &declaration_) -> value {
+                       output += "Declaring ";
+                       output += declaration_.name.content;
+                       output += "\n";
                        return nullptr;
                    }},
         to_evaluate.value);

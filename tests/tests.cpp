@@ -48,3 +48,8 @@ BOOST_AUTO_TEST_CASE(parentheses)
 {
     BOOST_TEST(lpg::run_result{"Hello, world!"} == lpg::run(R"aaa((print("Hello, world!")))aaa"));
 }
+
+BOOST_AUTO_TEST_CASE(variable_declaration)
+{
+    BOOST_TEST(lpg::run_result{"Declaring a\n"} == lpg::run(R"(let a = "Hello world")"));
+}

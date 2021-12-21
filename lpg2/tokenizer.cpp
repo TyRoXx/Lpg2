@@ -54,6 +54,12 @@ std::optional<lpg::token> lpg::scanner::peek()
         peeked = token{special_character::right_parenthesis};
         return peeked;
     }
+    if (head == '=')
+    {
+        ++next;
+        peeked = token{special_character::assign};
+        return peeked;
+    }
     if (head == '/')
     {
         ++next;

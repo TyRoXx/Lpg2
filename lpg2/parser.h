@@ -28,9 +28,15 @@ namespace lpg
         std::vector<expression> elements;
     };
 
+    struct declaration
+    {
+        identifier name;
+        std::unique_ptr<expression> initializer;
+    };
+
     struct expression
     {
-        std::variant<string_literal, identifier, call, sequence> value;
+        std::variant<string_literal, identifier, call, sequence, declaration> value;
     };
 
     std::optional<non_comment> peek_next_non_comment(scanner &tokens);
@@ -47,4 +53,4 @@ namespace lpg
     expression parse_call(expression callee, scanner &tokens);
 
     void expect_special_character(scanner &tokens, special_character expected);
-}
+} // namespace lpg

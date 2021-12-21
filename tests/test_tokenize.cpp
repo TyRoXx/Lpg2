@@ -146,3 +146,11 @@ BOOST_AUTO_TEST_CASE(ignore_spaces)
     BOOST_TEST(s.is_at_the_end());
     BOOST_TEST(id_token.value() == lpg::non_comment{lpg::identifier{"a"}});
 }
+
+BOOST_AUTO_TEST_CASE(scan_assign)
+{
+    auto s = lpg::scanner("=");
+    std::optional<lpg::non_comment> const let_token = lpg::pop_next_non_comment(s);
+    BOOST_TEST(s.is_at_the_end());
+    BOOST_TEST(let_token.value() == lpg::non_comment{lpg::special_character::assign});
+}
