@@ -15,7 +15,11 @@ std::optional<lpg::token> lpg::scanner::peek()
         return peeked;
     }
 
-    assert(!is_at_the_end());
+    if (is_at_the_end())
+    {
+        return std::nullopt;
+    }
+
     char const head = *next;
     if (head == '(')
     {

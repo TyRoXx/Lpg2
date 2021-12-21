@@ -69,7 +69,7 @@ namespace lpg
         std::optional<token> right_side = tokens.peek();
         if (!right_side)
         {
-            throw std::invalid_argument("No right side deteced");
+            return left_side;
         }
 
         return std::visit(
