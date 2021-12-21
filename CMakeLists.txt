@@ -54,12 +54,12 @@ if(UNIX)
         -Wswitch-enum
         -Wuninitialized
         -Wstrict-overflow=5
-        -std=c++17
+        -std=c++20
     )
 endif()
 
 if(MSVC)
-    add_definitions(/std:c++17)
+    add_definitions(/std:c++20)
     # disable the useless "warnings"
     add_definitions(/Wall /WX /wd4514 /wd4710 /wd4820 /wd5031 /wd4625 /wd4626 /wd5027 /wd4464 /wd4668 /wd4623 /wd5243 /wd4619 /wd5026 /wd4266 /wd4371 /wd4866)
     # 'return': conversion from '__int64' to 'size_t', signed/unsigned mismatch

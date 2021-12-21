@@ -5,13 +5,17 @@
 #include <ostream>
 #include <string_view>
 #include <variant>
+#include <compare>
 
 namespace lpg
 {
     struct identifier
     {
         std::string_view content;
+        std::weak_ordering operator<=>(identifier const &other) const noexcept = default;
     };
+
+     std::ostream &operator<<(std::ostream &out,const lpg::identifier& value);
 
     enum class special_character
     {
@@ -20,16 +24,15 @@ namespace lpg
         slash
     };
 
-    inline std::basic_ostream<char> &operator<<(std::basic_ostream<char> &out, lpg::special_character value)
-    {
-        out << static_cast<int>(value);
-        return out;
-    }
+     std::ostream &operator<<(std::ostream &out, lpg::special_character value);
 
     struct string_literal
     {
         std::string_view inner_content;
+        std::weak_ordering operator<=>(string_literal const &other) const noexcept = default;
     };
+
+    std::ostream &operator<<(std::ostream &out, const lpg::string_literal &value);
 
     struct comment
     {
@@ -64,4 +67,13 @@ namespace lpg
         [[nodiscard]] std::optional<token> pop();
         [[nodiscard]] std::optional<token> peek();
     };
+
+    template <class ...T>
+    std::ostream &operator<<(std::ostream &out, const std::variant<T...> &value)
+    {
+        std::visit(
+            [&out, &value](const auto &element) { out << value.index() << ": " << element; },
+            value);
+        return out;
+    }
 } // namespace lpg

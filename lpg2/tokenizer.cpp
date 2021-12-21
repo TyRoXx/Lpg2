@@ -1,6 +1,22 @@
 #include "tokenizer.h"
 #include <stdexcept>
 
+std::ostream &lpg::operator<<(std::ostream &out, const lpg::identifier &value)
+{
+    return out << value.content;
+}
+
+std::ostream &lpg::operator<<(std::ostream &out, lpg::special_character value)
+{
+    out << static_cast<int>(value);
+    return out;
+}
+
+std::ostream &lpg::operator<<(std::ostream &out, const lpg::string_literal &value)
+{
+    return out << '"' << value.inner_content << '"';
+}
+
 std::optional<lpg::token> lpg::scanner::pop()
 {
     auto result = peek();
@@ -20,7 +36,12 @@ std::optional<lpg::token> lpg::scanner::peek()
         return std::nullopt;
     }
 
-    char const head = *next;
+    char head = *next;
+    while (head == ' ')
+    {
+        next++;
+        head = *next;
+    }
     if (head == '(')
     {
         ++next;

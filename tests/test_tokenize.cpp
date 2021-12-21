@@ -134,3 +134,15 @@ BOOST_AUTO_TEST_CASE(print_special_char)
     s << lpg::special_character::left_parenthesis;
     BOOST_TEST(s.str() == "0");
 }
+
+BOOST_AUTO_TEST_CASE(ignore_spaces)
+{
+    auto s = lpg::scanner("let a");
+    std::optional<lpg::non_comment> const let_token = lpg::pop_next_non_comment(s);
+    BOOST_TEST(!s.is_at_the_end());
+    BOOST_TEST(let_token.value() == lpg::non_comment{lpg::identifier{"let"}});
+
+    std::optional<lpg::non_comment> const id_token = lpg::pop_next_non_comment(s);
+    BOOST_TEST(s.is_at_the_end());
+    BOOST_TEST(id_token.value() == lpg::non_comment{lpg::identifier{"a"}});
+}
