@@ -1,0 +1,4 @@
+[docs: @is_even does bla]
+$rename 2021-12-21, is_even, isEven
+$addParameter 2021-12-21, is_even, woff: bool, default=true
+fn isEven(:int, woff: bool)
