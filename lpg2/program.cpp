@@ -13,10 +13,10 @@ namespace lpg
     }
 } // namespace lpg
 
-lpg::value lpg::evaluate_call(call const &function, std::string &output)
+lpg::value lpg::evaluate_call(call const &function, local_variable_map &locals, std::string &output)
 {
-    value const callee = evaluate(*function.callee, output);
-    value const argument = evaluate(*function.argument, output);
+    value const callee = evaluate(*function.callee, locals, output);
+    value const argument = evaluate(*function.argument, locals, output);
 
     std::visit(overloaded{
                    [&output](builtin_functions const callee, std::string const &argument) {
@@ -35,43 +35,57 @@ lpg::value lpg::evaluate_call(call const &function, std::string &output)
     return nullptr;
 }
 
-void lpg::evaluate_sequence(sequence const &to_evaluate, std::string &output)
+void lpg::evaluate_sequence(sequence const &to_evaluate, local_variable_map &locals, std::string &output)
 {
     for (expression const &element : to_evaluate.elements)
     {
-        evaluate(element, output);
+        evaluate(element, locals, output);
     }
 }
 
-lpg::value lpg::evaluate(expression const &to_evaluate, std::string &output)
+lpg::value lpg::evaluate(expression const &to_evaluate, local_variable_map &locals, std::string &output)
 {
     return std::visit(
-        overloaded{[](string_literal constant) -> value { return value{std::string{constant.inner_content}}; },
-                   [](identifier name) -> value {
-                       if (name.content == "print")
-                       {
-                           return builtin_functions::print;
-                       }
-                       throw std::invalid_argument("Unknown function");
-                   },
-                   [&output](call const &function) -> value { return evaluate_call(function, output); },
-                   [&output](sequence const &list) -> value {
-                       evaluate_sequence(list, output);
-                       return nullptr;
-                   },
-                   [&output](declaration const &declaration_) -> value {
-                       output += "Declaring ";
-                       output += declaration_.name.content;
-                       output += "\n";
-                       return nullptr;
-                   }},
+        overloaded{
+            [](string_literal constant) -> value { return value{std::string{constant.inner_content}}; },
+            [&locals](identifier name) -> value {
+                if (name.content == "print")
+                {
+                    return builtin_functions::print;
+                }
+                auto const found = locals.find(std::string(name.content));
+                if (found == locals.end())
+                {
+                    throw std::invalid_argument("Unknown identifier " + std::string(name.content));
+                }
+                return found->second;
+            },
+            [&output, &locals](call const &function) -> value { return evaluate_call(function, locals, output); },
+            [&output, &locals](sequence const &list) -> value {
+                evaluate_sequence(list, locals, output);
+                return nullptr;
+            },
+            [&output, &locals](declaration const &declaration_) -> value {
+                output += "Declaring ";
+                output += declaration_.name.content;
+                output += "\n";
+                value initial_value = evaluate(*declaration_.initializer, locals, output);
+                bool const inserted =
+                    locals.insert(std::make_pair(declaration_.name.content, std::move(initial_value))).second;
+                if (!inserted)
+                {
+                    throw std::invalid_argument("Redeclaration of " + std::string(declaration_.name.content));
+                }
+                return nullptr;
+            }},
         to_evaluate.value);
 }
 
 lpg::run_result lpg::run(std::string_view source)
 {
     sequence program = compile(source);
+    local_variable_map locals;
     std::string output;
-    evaluate_sequence(program, output);
+    evaluate_sequence(program, locals, output);
     return run_result{std::move(output)};
 }

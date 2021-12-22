@@ -53,3 +53,16 @@ BOOST_AUTO_TEST_CASE(variable_declaration)
 {
     BOOST_TEST(lpg::run_result{"Declaring a\n"} == lpg::run(R"(let a = "Hello world")"));
 }
+
+BOOST_AUTO_TEST_CASE(variable_access)
+{
+    BOOST_TEST(lpg::run_result{"Declaring a\nHello world"} == lpg::run(R"(let a = "Hello world"
+print(a))"));
+}
+
+BOOST_AUTO_TEST_CASE(variable_redeclaration)
+{
+    BOOST_CHECK_THROW(auto a = lpg::run(R"(let a = "Hello world"
+let a = "Hello world")"),
+                      std::invalid_argument);
+}

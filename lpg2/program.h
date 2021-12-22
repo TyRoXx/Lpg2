@@ -1,6 +1,7 @@
 #pragma once
 
 #include "parser.h"
+#include <map>
 #include <optional>
 #include <ostream>
 #include <string_view>
@@ -38,12 +39,10 @@ namespace lpg
     };
 
     using value = std::variant<std::string, builtin_functions, std::nullptr_t>;
+    using local_variable_map = std::map<std::string, value>;
 
-    value evaluate_call(call const &function, std::string &output);
-
-    void evaluate_sequence(sequence const &to_evaluate, std::string &output);
-
-    value evaluate(expression const &to_evaluate, std::string &output);
-
+    value evaluate_call(call const &function, local_variable_map &locals, std::string &output);
+    void evaluate_sequence(sequence const &to_evaluate, local_variable_map &locals, std::string &output);
+    value evaluate(expression const &to_evaluate, local_variable_map &locals, std::string &output);
     [[nodiscard]] run_result run(std::string_view source);
 } // namespace lpg

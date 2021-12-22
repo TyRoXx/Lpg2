@@ -18,7 +18,11 @@ namespace lpg
     {
         while (!tokens.is_at_the_end())
         {
-            auto token = tokens.peek();
+            std::optional<token> token = tokens.peek();
+            if (!token)
+            {
+                return std::nullopt;
+            }
 
             std::optional<non_comment> result =
                 std::visit(overloaded{
