@@ -127,12 +127,25 @@ BOOST_AUTO_TEST_CASE(scan_comment)
     BOOST_TEST(id.content == "test");
 }
 
-BOOST_AUTO_TEST_CASE(print_special_char)
+BOOST_AUTO_TEST_CASE(print_special_character)
 {
-    std::stringstream s;
-
+    std::ostringstream s;
     s << lpg::special_character::left_parenthesis;
     BOOST_TEST(s.str() == "0");
+}
+
+BOOST_AUTO_TEST_CASE(print_identifier)
+{
+    std::ostringstream s;
+    s << lpg::identifier{"name"};
+    BOOST_TEST(s.str() == "name");
+}
+
+BOOST_AUTO_TEST_CASE(print_string_literal)
+{
+    std::ostringstream s;
+    s << lpg::string_literal{"content"};
+    BOOST_TEST(s.str() == "\"content\"");
 }
 
 BOOST_AUTO_TEST_CASE(ignore_spaces)

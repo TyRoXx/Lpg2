@@ -44,6 +44,11 @@ BOOST_AUTO_TEST_CASE(unknown_function)
     BOOST_CHECK_THROW(auto a = lpg::run(R"aaa(hello("ABC"))aaa"), std::invalid_argument);
 }
 
+BOOST_AUTO_TEST_CASE(argument_type_mismatch)
+{
+    BOOST_CHECK_THROW(auto a = lpg::run(R"aaa(print(print))aaa"), std::invalid_argument);
+}
+
 BOOST_AUTO_TEST_CASE(parentheses)
 {
     BOOST_TEST(lpg::run_result{"Hello, world!"} == lpg::run(R"aaa((print("Hello, world!")))aaa"));
@@ -65,4 +70,12 @@ BOOST_AUTO_TEST_CASE(variable_redeclaration)
     BOOST_CHECK_THROW(auto a = lpg::run(R"(let a = "Hello world"
 let a = "Hello world")"),
                       std::invalid_argument);
+}
+
+BOOST_AUTO_TEST_CASE(variant_printing)
+{
+    using lpg::operator<<;
+    std::ostringstream buffer;
+    buffer << std::variant<int, float>(12);
+    BOOST_TEST("0: 12" == buffer.str());
 }
