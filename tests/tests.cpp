@@ -77,6 +77,24 @@ BOOST_AUTO_TEST_CASE(invalid_string_position)
     BOOST_CHECK_THROW(auto a = lpg::run(R"(let a "Hello world")"), std::invalid_argument);
 }
 
+BOOST_AUTO_TEST_CASE(unterminated_string)
+{
+    BOOST_CHECK_THROW(auto a = lpg::run(R"("Hello world)"), std::invalid_argument);
+}
+
+BOOST_AUTO_TEST_CASE(missing_initializer_for_declaration)
+{
+    std::vector<std::string> error_messages;
+    auto const on_error = [&error_messages](lpg::parse_error error) -> void {
+        error_messages.push_back(error.error_message);
+    };
+    lpg::sequence output = lpg::compile(R"(let a = )", on_error);
+    BOOST_TEST(output.elements.empty());
+    auto const expected_errors = {"Unexpected end of stream", "Invalid initializer value for identifier: a"};
+    BOOST_CHECK_EQUAL_COLLECTIONS(
+        expected_errors.begin(), expected_errors.end(), error_messages.begin(), error_messages.end());
+}
+
 BOOST_AUTO_TEST_CASE(trailing_new_line)
 {
     BOOST_TEST(lpg::run_result{"Declaring a\nHello world"} == lpg::run(R"(let a = "Hello world"

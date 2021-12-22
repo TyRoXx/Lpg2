@@ -45,4 +45,5 @@ namespace lpg
     void evaluate_sequence(sequence const &to_evaluate, local_variable_map &locals, std::string &output);
     value evaluate(expression const &to_evaluate, local_variable_map &locals, std::string &output);
     [[nodiscard]] run_result run(std::string_view source);
+    [[nodiscard]] lpg::sequence compile(std::string_view source, std::function<void(parse_error)> on_error);
 } // namespace lpg

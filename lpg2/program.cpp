@@ -6,10 +6,10 @@
 
 namespace lpg
 {
-    sequence compile(std::string_view source)
+    sequence compile(std::string_view source, std::function<void(parse_error)> on_error)
     {
         scanner tokens{source};
-        parser parser(tokens);
+        parser parser(tokens, on_error);
         return parser.parse_sequence();
     }
 } // namespace lpg
@@ -82,9 +82,13 @@ lpg::value lpg::evaluate(expression const &to_evaluate, local_variable_map &loca
         to_evaluate.value);
 }
 
+void on_error(lpg::parse_error result)
+{
+}
+
 lpg::run_result lpg::run(std::string_view source)
 {
-    sequence program = compile(source);
+    sequence program = compile(source, on_error);
     local_variable_map locals;
     std::string output;
     evaluate_sequence(program, locals, output);

@@ -46,20 +46,27 @@ namespace lpg
     token expect_token(scanner &tokens);
     void expect_special_character(scanner &tokens, special_character expected);
 
+    struct parse_error
+    {
+        std::string error_message;
+    };
+
     struct parser
     {
-        parser(scanner tokens)
+        parser(scanner tokens, std::function<void(parse_error)> on_error)
             : tokens(std::move(tokens))
+            , on_error(std::move(on_error))
         {
         }
         scanner tokens;
+        std::function<void(parse_error)> on_error;
 
         sequence parse_sequence();
 
     private:
-        expression parse_expression();
-        expression parse_parentheses();
-        expression parse_call(expression callee);
-        declaration parse_declaration();
+        std::optional<expression> parse_expression();
+        std::optional<expression> parse_parentheses();
+        std::optional<expression> parse_call(expression callee);
+        std::optional<declaration> parse_declaration();
     };
 } // namespace lpg
