@@ -18,8 +18,8 @@ namespace lpg
     {
         while (!tokens.is_at_the_end())
         {
-            std::optional<token> token = tokens.peek();
-            if (!token)
+            std::optional<token> peeked = tokens.peek();
+            if (!peeked)
             {
                 return std::nullopt;
             }
@@ -29,27 +29,28 @@ namespace lpg
                                [](comment const &) -> std::optional<non_comment> { return std::nullopt; },
                                [](auto value) -> std::optional<non_comment> { return value; },
                            },
-                           token.value());
+                           peeked.value());
 
             if (result.has_value())
             {
                 return result;
             }
-            assert(tokens.pop());
+            std::optional<token> popped = tokens.pop();
+            assert(popped);
         }
         return std::nullopt;
     }
 
     std::optional<non_comment> pop_next_non_comment(scanner &tokens)
     {
-        std::optional<non_comment> token = peek_next_non_comment(tokens);
-        if (!token.has_value())
+        std::optional<non_comment> peeked = peek_next_non_comment(tokens);
+        if (!peeked.has_value())
         {
             return std::nullopt;
         }
-        assert(tokens.pop());
-
-        return token;
+        std::optional<token> popped = tokens.pop();
+        assert(popped);
+        return peeked;
     }
 
     token expect_token(scanner &tokens)
