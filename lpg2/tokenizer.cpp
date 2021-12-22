@@ -37,11 +37,21 @@ std::optional<lpg::token> lpg::scanner::peek()
     }
 
     char head = *next;
-    while ((head == ' ') || (head == '\n'))
+    while (is_whitespace(head))
     {
         next++;
+        if (is_at_the_end())
+        {
+            return std::nullopt;
+        }
         head = *next;
     }
+
+    if (is_at_the_end())
+    {
+        return std::nullopt;
+    }
+
     if (head == '(')
     {
         ++next;

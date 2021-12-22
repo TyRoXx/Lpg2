@@ -168,6 +168,11 @@ namespace lpg
         sequence result;
         while (!tokens.is_at_the_end())
         {
+            std::optional<non_comment> maybe_token = peek_next_non_comment(tokens);
+            if (!maybe_token)
+            {
+                break;
+            }
             result.elements.push_back(parse_expression(tokens));
         }
         return result;

@@ -47,6 +47,11 @@ namespace lpg
         return c >= 'a' && c <= 'z';
     }
 
+    inline bool is_whitespace(char c)
+    {
+        return c == ' ' || c == '\n';
+    }
+
     struct scanner
     {
         std::string_view::iterator next;

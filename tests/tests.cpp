@@ -72,6 +72,13 @@ let a = "Hello world")"),
                       std::invalid_argument);
 }
 
+BOOST_AUTO_TEST_CASE(trailing_new_line)
+{
+    BOOST_TEST(lpg::run_result{"Declaring a\nHello world"} == lpg::run(R"(let a = "Hello world"
+print(a)
+)"));
+}
+
 BOOST_AUTO_TEST_CASE(variant_printing)
 {
     using lpg::operator<<;
