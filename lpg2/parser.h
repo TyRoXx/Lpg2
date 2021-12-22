@@ -1,6 +1,7 @@
 #pragma once
 
 #include "tokenizer.h"
+#include <functional>
 #include <memory>
 #include <string>
 #include <variant>
@@ -43,14 +44,22 @@ namespace lpg
     std::optional<non_comment> pop_next_non_comment(scanner &tokens);
 
     token expect_token(scanner &tokens);
-
-    expression parse_expression(scanner &tokens);
-
-    sequence parse_sequence(scanner &tokens);
-
-    expression parse_parentheses(scanner &tokens);
-
-    expression parse_call(expression callee, scanner &tokens);
-
     void expect_special_character(scanner &tokens, special_character expected);
+
+    struct parser
+    {
+        parser(scanner tokens)
+            : tokens(std::move(tokens))
+        {
+        }
+        scanner tokens;
+
+        sequence parse_sequence();
+
+    private:
+        expression parse_expression();
+        expression parse_parentheses();
+        expression parse_call(expression callee);
+        declaration parse_declaration();
+    };
 } // namespace lpg

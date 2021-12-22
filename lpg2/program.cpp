@@ -9,7 +9,8 @@ namespace lpg
     sequence compile(std::string_view source)
     {
         scanner tokens{source};
-        return parse_sequence(tokens);
+        parser parser(tokens);
+        return parser.parse_sequence();
     }
 } // namespace lpg
 

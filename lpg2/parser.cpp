@@ -93,18 +93,15 @@ namespace lpg
             expect_token(tokens));
     }
 
-    namespace
+    declaration parser::parse_declaration()
     {
-        declaration parse_declaration(scanner &tokens)
-        {
-            identifier name = expect_identifier(tokens);
-            expect_special_character(tokens, special_character::assign);
-            expression initializer = parse_expression(tokens);
-            return declaration{name, std::make_unique<expression>(std::move(initializer))};
-        }
-    } // namespace
+        identifier name = expect_identifier(tokens);
+        expect_special_character(tokens, special_character::assign);
+        expression initializer = parse_expression();
+        return declaration{name, std::make_unique<expression>(std::move(initializer))};
+    }
 
-    expression parse_expression(scanner &tokens)
+    expression parser::parse_expression()
     {
         std::optional<non_comment> const next_token = pop_next_non_comment(tokens);
         if (!next_token)
@@ -113,18 +110,18 @@ namespace lpg
         }
 
         expression left_side =
-            std::visit(overloaded{[&tokens](identifier const &callee) -> expression {
+            std::visit(overloaded{[this](identifier const &callee) -> expression {
                                       if (callee.content == "let")
                                       {
-                                          return expression{parse_declaration(tokens)};
+                                          return expression{parse_declaration()};
                                       }
                                       return expression{callee};
                                   },
-                                  [&tokens](special_character character) -> expression {
+                                  [this](special_character character) -> expression {
                                       switch (character)
                                       {
                                       case special_character::left_parenthesis:
-                                          return parse_parentheses(tokens);
+                                          return parse_parentheses();
                                       case special_character::right_parenthesis:
                                           throw std::invalid_argument("Can not have a closing parenthesis here.");
                                       case special_character::slash:
@@ -145,11 +142,11 @@ namespace lpg
 
         return std::visit(
             overloaded{[&left_side](identifier const &) -> expression { return std::move(left_side); },
-                       [&left_side, &tokens](special_character character) -> expression {
+                       [&left_side, this](special_character character) -> expression {
                            switch (character)
                            {
                            case special_character::left_parenthesis:
-                               return parse_call(std::move(left_side), tokens);
+                               return parse_call(std::move(left_side));
                            case special_character::right_parenthesis:
                                return std::move(left_side);
                            case special_character::slash:
@@ -163,7 +160,7 @@ namespace lpg
             *right_side);
     }
 
-    sequence parse_sequence(scanner &tokens)
+    sequence parser::parse_sequence()
     {
         sequence result;
         while (!tokens.is_at_the_end())
@@ -173,23 +170,23 @@ namespace lpg
             {
                 break;
             }
-            result.elements.push_back(parse_expression(tokens));
+            result.elements.push_back(parse_expression());
         }
         return result;
     }
 
-    expression parse_parentheses(scanner &tokens)
+    expression parser::parse_parentheses()
     {
-        expression result = parse_expression(tokens);
+        expression result = parse_expression();
         expect_special_character(tokens, special_character::right_parenthesis);
         return result;
     }
 
-    expression parse_call(expression callee, scanner &tokens)
+    expression parser::parse_call(expression callee)
     {
         // popping off the left parenthesis
         (void)tokens.pop();
-        expression argument = parse_expression(tokens);
+        expression argument = parse_expression();
         expect_special_character(tokens, special_character::right_parenthesis);
         return expression{
             call{std::make_unique<expression>(std::move(callee)), std::make_unique<expression>(std::move(argument))}};
