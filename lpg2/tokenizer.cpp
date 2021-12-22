@@ -47,11 +47,6 @@ std::optional<lpg::token> lpg::scanner::peek()
         head = *next;
     }
 
-    if (is_at_the_end())
-    {
-        return std::nullopt;
-    }
-
     if (head == '(')
     {
         ++next;
