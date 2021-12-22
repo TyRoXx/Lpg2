@@ -162,9 +162,11 @@ namespace lpg
                     case special_character::right_parenthesis:
                         return std::move(left_side);
                     case special_character::slash:
-                        throw std::invalid_argument("Can't have a slash here");
+                        on_error(parse_error{"Can not have a slash here."});
+                        return std::nullopt;
                     case special_character::assign:
-                        throw std::invalid_argument("Can not have an assignment operator here.");
+                        on_error(parse_error{"Can not have an assignment operator here."});
+                        return std::nullopt;
                     }
                     LPG_UNREACHABLE();
                 },
@@ -197,7 +199,7 @@ namespace lpg
         std::optional<expression> result = parse_expression();
         if (!result)
         {
-            on_error(parse_error{"Could not parse expression inside parenthese"});
+            on_error(parse_error{"Can not parse expression inside parenthese."});
             return std::nullopt;
         }
         expect_special_character(tokens, special_character::right_parenthesis);

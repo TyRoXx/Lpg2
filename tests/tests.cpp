@@ -11,6 +11,18 @@ namespace
         buffer << value;
         return buffer.str();
     }
+
+    void expect_compilation_error(const std::string program, const std::vector<std::string> expected_errors)
+    {
+        std::vector<std::string> error_messages;
+        auto const on_error = [&error_messages](lpg::parse_error error) -> void {
+            error_messages.push_back(error.error_message);
+        };
+        lpg::sequence output = lpg::compile(program, on_error);
+        BOOST_TEST(output.elements.empty());
+        BOOST_CHECK_EQUAL_COLLECTIONS(
+            expected_errors.begin(), expected_errors.end(), error_messages.begin(), error_messages.end());
+    }
 } // namespace
 
 BOOST_AUTO_TEST_CASE(print_run_result)
@@ -82,17 +94,41 @@ BOOST_AUTO_TEST_CASE(unterminated_string)
     BOOST_CHECK_THROW(auto a = lpg::run(R"("Hello world)"), std::invalid_argument);
 }
 
+BOOST_AUTO_TEST_CASE(mismatching_closing_parenthesis)
+{
+    BOOST_CHECK_THROW(auto a = lpg::run(")"), std::invalid_argument);
+}
+
+BOOST_AUTO_TEST_CASE(only_slash)
+{
+    BOOST_CHECK_THROW(auto a = lpg::run("/"), std::invalid_argument);
+}
+
+BOOST_AUTO_TEST_CASE(line_beginning_with_assign_operator)
+{
+    BOOST_CHECK_THROW(auto a = lpg::run("="), std::invalid_argument);
+}
+
+BOOST_AUTO_TEST_CASE(identifier_followed_by_special_character)
+{
+    expect_compilation_error("a =", {"Can not have an assignment operator here."});
+}
+
+BOOST_AUTO_TEST_CASE(identifier_followed_by_slash)
+{
+    expect_compilation_error("a /", {"Can not have a slash here."});
+}
+
+BOOST_AUTO_TEST_CASE(invalid_content_inside_parenthese)
+{
+    expect_compilation_error("(a /)", {"Can not have a slash here.", "Can not parse expression inside parenthese.",
+                                       "Can not have a slash here."});
+}
+
 BOOST_AUTO_TEST_CASE(missing_initializer_for_declaration)
 {
-    std::vector<std::string> error_messages;
-    auto const on_error = [&error_messages](lpg::parse_error error) -> void {
-        error_messages.push_back(error.error_message);
-    };
-    lpg::sequence output = lpg::compile(R"(let a = )", on_error);
-    BOOST_TEST(output.elements.empty());
-    auto const expected_errors = {"Unexpected end of stream", "Invalid initializer value for identifier: a"};
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        expected_errors.begin(), expected_errors.end(), error_messages.begin(), error_messages.end());
+    expect_compilation_error(
+        R"(let a = )", {"Unexpected end of stream", "Invalid initializer value for identifier: a"});
 }
 
 BOOST_AUTO_TEST_CASE(trailing_new_line)
