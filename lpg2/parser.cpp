@@ -83,18 +83,19 @@ namespace lpg
                                   [](comment) { throw std::invalid_argument("unexpected comment"); }},
                        expect_token(tokens));
         }
-    } // namespace
 
-    identifier expect_identifier(scanner &tokens)
-    {
-        return std::visit(
-            overloaded{
-                [](identifier &&identifier_) -> identifier { return std::move(identifier_); },
-                [](special_character) -> identifier { throw std::invalid_argument("unexpected special character"); },
-                [](string_literal) -> identifier { throw std::invalid_argument("unexpected string"); },
-                [](comment) -> identifier { throw std::invalid_argument("unexpected comment"); }},
-            expect_token(tokens));
-    }
+        identifier expect_identifier(scanner &tokens)
+        {
+            return std::visit(
+                overloaded{[](identifier &&identifier_) -> identifier { return std::move(identifier_); },
+                           [](special_character) -> identifier {
+                               throw std::invalid_argument("unexpected special character");
+                           },
+                           [](string_literal) -> identifier { throw std::invalid_argument("unexpected string"); },
+                           [](comment) -> identifier { throw std::invalid_argument("unexpected comment"); }},
+                expect_token(tokens));
+        }
+    } // namespace
 
     std::optional<declaration> parser::parse_declaration()
     {
