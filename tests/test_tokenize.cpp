@@ -140,6 +140,13 @@ BOOST_AUTO_TEST_CASE(print_string_literal)
     BOOST_TEST(s.str() == "\"content\"");
 }
 
+BOOST_AUTO_TEST_CASE(print_comment)
+{
+    std::ostringstream s;
+    s << lpg::comment{"content"};
+    BOOST_TEST(s.str() == "/*content*/");
+}
+
 BOOST_AUTO_TEST_CASE(ignore_spaces)
 {
     auto s = lpg::scanner("let a");

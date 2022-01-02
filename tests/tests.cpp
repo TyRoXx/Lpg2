@@ -145,8 +145,21 @@ print(a)
 
 BOOST_AUTO_TEST_CASE(variant_printing)
 {
-    using lpg::operator<<;
     std::ostringstream buffer;
     buffer << std::variant<int, float>(12);
     BOOST_TEST("0: 12" == buffer.str());
+}
+
+BOOST_AUTO_TEST_CASE(optional_printing)
+{
+    std::ostringstream buffer;
+    buffer << std::optional<int>(12);
+    BOOST_TEST("12" == buffer.str());
+}
+
+BOOST_AUTO_TEST_CASE(optional_printing_nullopt)
+{
+    std::ostringstream buffer;
+    buffer << std::optional<int>();
+    BOOST_TEST("nullopt" == buffer.str());
 }
