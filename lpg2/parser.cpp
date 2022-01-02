@@ -16,7 +16,7 @@ namespace lpg
 {
     std::optional<non_comment> peek_next_non_comment(scanner &tokens)
     {
-        while (!tokens.is_at_the_end())
+        for (;;)
         {
             std::optional<token> peeked = tokens.peek();
             if (!peeked)
@@ -38,7 +38,6 @@ namespace lpg
             std::optional<token> popped = tokens.pop();
             assert(popped);
         }
-        return std::nullopt;
     }
 
     std::optional<non_comment> pop_next_non_comment(scanner &tokens)
@@ -57,14 +56,10 @@ namespace lpg
     {
         token expect_token(scanner &tokens)
         {
-            if (tokens.is_at_the_end())
-            {
-                throw std::invalid_argument("unexpected end of input");
-            }
             std::optional<token> head = tokens.pop();
             if (!head)
             {
-                throw std::invalid_argument("expected token");
+                throw std::invalid_argument("unexpected end of input");
             }
             return std::move(*head);
         }
@@ -181,7 +176,7 @@ namespace lpg
     sequence parser::parse_sequence()
     {
         sequence result;
-        while (!tokens.is_at_the_end())
+        for (;;)
         {
             std::optional<non_comment> maybe_token = peek_next_non_comment(tokens);
             if (!maybe_token)

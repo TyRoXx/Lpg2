@@ -19,10 +19,13 @@ static void benchmark_tokenizer(benchmark::State &state)
     for (auto _ : state)
     {
         lpg::scanner s(string);
-        while (!s.is_at_the_end())
+        for (;;)
         {
-            auto t = s.pop();
-            assert(t.has_value());
+            auto t = s.peek();
+            if (!t.has_value())
+            {
+                break;
+            }
         }
         ++i;
     }

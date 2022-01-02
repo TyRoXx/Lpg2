@@ -17,6 +17,11 @@ std::ostream &lpg::operator<<(std::ostream &out, const lpg::string_literal &valu
     return out << '"' << value.inner_content << '"';
 }
 
+std::ostream &lpg::operator<<(std::ostream &out, const comment &value)
+{
+    return out << "/*" << value.inner_content << "*/";
+}
+
 std::optional<lpg::token> lpg::scanner::pop()
 {
     auto result = peek();
@@ -31,7 +36,7 @@ std::optional<lpg::token> lpg::scanner::peek()
         return peeked;
     }
 
-    if (is_at_the_end())
+    if (next == end)
     {
         return std::nullopt;
     }
@@ -40,7 +45,7 @@ std::optional<lpg::token> lpg::scanner::peek()
     while (is_whitespace(head))
     {
         next++;
-        if (is_at_the_end())
+        if (next == end)
         {
             return std::nullopt;
         }
