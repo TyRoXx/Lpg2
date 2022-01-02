@@ -144,7 +144,7 @@ namespace lpg
 
     std::optional<identifier> parser::expect_identifier()
     {
-        const std::optional<token> token = tokens.pop();
+        std::optional<token> token = tokens.pop();
 
         if (!token)
         {
@@ -155,9 +155,9 @@ namespace lpg
         return std::visit(
             overloaded{
                 [](identifier &&identifier_) -> std::optional<identifier> { return std::move(identifier_); },
-                [](auto) -> std::optional<identifier> { return std::nullopt; },
+                [](auto &&) -> std::optional<identifier> { return std::nullopt; },
             },
-            token.value());
+            std::move(*token));
     }
 
     std::optional<declaration> parser::parse_declaration()
@@ -185,6 +185,7 @@ namespace lpg
         if (!token)
         {
             on_error(parse_error{"Expected special character but got end of stream"});
+            return;
         }
         if (std::holds_alternative<special_character>(token.value()))
         {
