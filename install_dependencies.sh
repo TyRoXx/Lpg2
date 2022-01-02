@@ -1,9 +1,21 @@
 #!/usr/bin/env bash
 
+if [[ "$#" != 1 ]]; then
+    echo "Please provide enough arguments"
+    echo "Usage: $0 <build directory>"
+    exit 1
+fi
+
 BUILD_SUPER_DIR=$1
 DEPENDENCIES_DIR=$BUILD_SUPER_DIR/lpg2_dependencies
 
-sudo apt install ninja-build g++-8 clang-format-3.9 || exit 1
+if apt; then
+    sudo apt install ninja-build g++-8 clang-format-3.9 || exit 1
+elif pacman; then
+    sudo pacman -Syy curl zip unzip tar --no-confirm || exit 1
+else
+    echo "No supported package manager found"
+fi
 
 mkdir -p $DEPENDENCIES_DIR || exit 1
 pushd $DEPENDENCIES_DIR || exit 1
