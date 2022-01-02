@@ -83,5 +83,8 @@ namespace lpg
         std::optional<expression> parse_braces();
         std::optional<expression> parse_call(expression callee);
         std::optional<declaration> parse_declaration();
+
+        std::optional<identifier> expect_identifier();
+        void expect_special_character(special_character special_character);
     };
 } // namespace lpg

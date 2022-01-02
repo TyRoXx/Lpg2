@@ -142,57 +142,59 @@ namespace lpg
         return out << value.error_message;
     }
 
-    namespace
+    std::optional<identifier> parser::expect_identifier()
     {
-        token expect_token(scanner &tokens)
+        const std::optional<token> token = tokens.pop();
+
+        if (!token)
         {
-            std::optional<token> head = tokens.pop();
-            if (!head)
-            {
-                throw std::invalid_argument("unexpected end of input");
-            }
-            return std::move(*head);
+            on_error(parse_error{"Expected identifier but got end of stream"});
+            return std::nullopt;
         }
 
-        void expect_special_character(scanner &tokens, special_character expected)
-        {
-            std::visit(overloaded{[](identifier const &) { throw std::invalid_argument("unexpected identifier"); },
-                                  [expected](special_character found) {
-                                      if (expected == found)
-                                      {
-                                          return;
-                                      }
-                                      throw std::invalid_argument("unexpected special character");
-                                  },
-                                  [](string_literal) { throw std::invalid_argument("unexpected string"); },
-                                  [](comment) { throw std::invalid_argument("unexpected comment"); }},
-                       expect_token(tokens));
-        }
-
-        identifier expect_identifier(scanner &tokens)
-        {
-            return std::visit(
-                overloaded{[](identifier &&identifier_) -> identifier { return std::move(identifier_); },
-                           [](special_character) -> identifier {
-                               throw std::invalid_argument("unexpected special character");
-                           },
-                           [](string_literal) -> identifier { throw std::invalid_argument("unexpected string"); },
-                           [](comment) -> identifier { throw std::invalid_argument("unexpected comment"); }},
-                expect_token(tokens));
-        }
-    } // namespace
+        return std::visit(
+            overloaded{
+                [](identifier &&identifier_) -> std::optional<identifier> { return std::move(identifier_); },
+                [](auto) -> std::optional<identifier> { return std::nullopt; },
+            },
+            token.value());
+    }
 
     std::optional<declaration> parser::parse_declaration()
     {
-        identifier name = expect_identifier(tokens);
-        expect_special_character(tokens, special_character::assign);
+        std::optional<identifier> name = expect_identifier();
+        if (!name)
+        {
+            on_error(parse_error({"Expected variable name but found end of file"}));
+            return std::nullopt;
+        }
+
+        expect_special_character(special_character::assign);
         std::optional<expression> initializer = parse_expression();
         if (!initializer)
         {
-            on_error(parse_error{"Invalid initializer value for identifier: " + std::string(name.content)});
+            on_error(parse_error{"Invalid initializer value for identifier: " + std::string(name.value().content)});
             return std::nullopt;
         }
-        return declaration{name, std::make_unique<expression>(std::move(initializer.value()))};
+        return declaration{name.value(), std::make_unique<expression>(std::move(initializer.value()))};
+    }
+
+    void parser::expect_special_character(special_character expected)
+    {
+        const std::optional<token> token = tokens.pop();
+        if (!token)
+        {
+            on_error(parse_error{"Expected special character but got end of stream"});
+        }
+        if (std::holds_alternative<special_character>(token.value()))
+        {
+            if (expected != std::get<special_character>(token.value()))
+            {
+                on_error(parse_error{"unexpected special character"});
+            }
+            return;
+        }
+        on_error(parse_error{"Unexpected something"});
     }
 
     std::optional<expression> parser::parse_expression()
@@ -223,15 +225,19 @@ namespace lpg
                            case special_character::left_parenthesis:
                                return parse_parentheses();
                            case special_character::right_parenthesis:
-                               throw std::invalid_argument("Can not have a closing parenthesis here.");
+                               on_error(parse_error({"Can not have a closing parenthesis here."}));
+break;
                            case special_character::left_brace:
                                return parse_braces();
                            case special_character::right_brace:
-                               throw std::invalid_argument("Can not have a closing brace here.");
+                               on_error(parse_error({"Can not have a closing parenthesis here."}));
+                               break;
                            case special_character::slash:
-                               throw std::invalid_argument("Can not have a slash here.");
+                               on_error(parse_error({"Can not have a slash here."}));
+                               break;
                            case special_character::assign:
-                               throw std::invalid_argument("Can not have an assignment operator here.");
+                               on_error(parse_error({"Can not have an assignment operator here."}));
+                               break;
                            }
                            LPG_UNREACHABLE();
                        },
@@ -312,7 +318,7 @@ namespace lpg
             on_error(parse_error{"Can not parse expression inside parenthese."});
             return std::nullopt;
         }
-        expect_special_character(tokens, special_character::right_parenthesis);
+        expect_special_character(special_character::right_parenthesis);
         return result;
     }
 
@@ -331,7 +337,7 @@ namespace lpg
             on_error(parse_error{"Could not parse argument of the function"});
             return std::nullopt;
         }
-        expect_special_character(tokens, special_character::right_parenthesis);
+        expect_special_character(special_character::right_parenthesis);
         return expression{call{std::make_unique<expression>(std::move(callee)),
                                std::make_unique<expression>(std::move(argument.value()))}};
     }
