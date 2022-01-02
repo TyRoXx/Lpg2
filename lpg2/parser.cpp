@@ -52,6 +52,11 @@ namespace lpg
         return peeked;
     }
 
+    std::ostream &operator<<(std::ostream &out, const parse_error &value)
+    {
+        return out << value.error_message;
+    }
+
     namespace
     {
         token expect_token(scanner &tokens)

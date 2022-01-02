@@ -48,6 +48,8 @@ namespace lpg
         std::string error_message;
     };
 
+    std::ostream &operator<<(std::ostream &out, const parse_error &value);
+
     struct parser
     {
         parser(scanner tokens, std::function<void(parse_error)> on_error)

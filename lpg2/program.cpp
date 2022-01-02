@@ -89,13 +89,10 @@ namespace lpg
     } // namespace
 } // namespace lpg
 
-void on_error(lpg::parse_error result)
+lpg::run_result lpg::run(std::string_view source, std::function<void(parse_error)> on_error)
 {
-}
-
-lpg::run_result lpg::run(std::string_view source)
-{
-    sequence program = compile(source, on_error);
+    assert(on_error);
+    sequence program = compile(source, move(on_error));
     local_variable_map locals;
     std::string output;
     evaluate_sequence(program, locals, output);
