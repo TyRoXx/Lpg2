@@ -53,34 +53,37 @@ namespace lpg
         return peeked;
     }
 
-    token expect_token(scanner &tokens)
+    namespace
     {
-        if (tokens.is_at_the_end())
+        token expect_token(scanner &tokens)
         {
-            throw std::invalid_argument("unexpected end of input");
+            if (tokens.is_at_the_end())
+            {
+                throw std::invalid_argument("unexpected end of input");
+            }
+            std::optional<token> head = tokens.pop();
+            if (!head)
+            {
+                throw std::invalid_argument("expected token");
+            }
+            return std::move(*head);
         }
-        std::optional<token> head = tokens.pop();
-        if (!head)
-        {
-            throw std::invalid_argument("expected token");
-        }
-        return std::move(*head);
-    }
 
-    void expect_special_character(scanner &tokens, special_character expected)
-    {
-        std::visit(overloaded{[](identifier const &) { throw std::invalid_argument("unexpected identifier"); },
-                              [expected](special_character found) {
-                                  if (expected == found)
-                                  {
-                                      return;
-                                  }
-                                  throw std::invalid_argument("unexpected special character");
-                              },
-                              [](string_literal) { throw std::invalid_argument("unexpected string"); },
-                              [](comment) { throw std::invalid_argument("unexpected comment"); }},
-                   expect_token(tokens));
-    }
+        void expect_special_character(scanner &tokens, special_character expected)
+        {
+            std::visit(overloaded{[](identifier const &) { throw std::invalid_argument("unexpected identifier"); },
+                                  [expected](special_character found) {
+                                      if (expected == found)
+                                      {
+                                          return;
+                                      }
+                                      throw std::invalid_argument("unexpected special character");
+                                  },
+                                  [](string_literal) { throw std::invalid_argument("unexpected string"); },
+                                  [](comment) { throw std::invalid_argument("unexpected comment"); }},
+                       expect_token(tokens));
+        }
+    } // namespace
 
     identifier expect_identifier(scanner &tokens)
     {

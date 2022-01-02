@@ -43,9 +43,6 @@ namespace lpg
     std::optional<non_comment> peek_next_non_comment(scanner &tokens);
     std::optional<non_comment> pop_next_non_comment(scanner &tokens);
 
-    token expect_token(scanner &tokens);
-    void expect_special_character(scanner &tokens, special_character expected);
-
     struct parse_error
     {
         std::string error_message;
