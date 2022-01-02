@@ -130,7 +130,7 @@ let a = "Hello world")",
 
 BOOST_AUTO_TEST_CASE(invalid_string_position)
 {
-    BOOST_CHECK_THROW(auto a = lpg::run(R"(let a "Hello world")", fail_on_error), std::invalid_argument);
+    expect_compilation_error(R"(let a "Hello world")", {"Expected something else"}, lpg::sequence{});
 }
 
 BOOST_AUTO_TEST_CASE(unterminated_string)
@@ -140,17 +140,17 @@ BOOST_AUTO_TEST_CASE(unterminated_string)
 
 BOOST_AUTO_TEST_CASE(mismatching_closing_parenthesis)
 {
-    BOOST_CHECK_THROW(auto a = lpg::run(")", fail_on_error), std::invalid_argument);
+    expect_compilation_error(")", {"Can not have a closing parenthesis here."}, lpg::sequence{});
 }
 
 BOOST_AUTO_TEST_CASE(only_slash)
 {
-    BOOST_CHECK_THROW(auto a = lpg::run("/", fail_on_error), std::invalid_argument);
+    expect_compilation_error("/", {"Can not have a slash here."}, lpg::sequence{});
 }
 
 BOOST_AUTO_TEST_CASE(line_beginning_with_assign_operator)
 {
-    BOOST_CHECK_THROW(auto a = lpg::run("=", fail_on_error), std::invalid_argument);
+    expect_compilation_error( "=", {"Can not have an assignment operator here."}, lpg::sequence{});
 }
 
 BOOST_AUTO_TEST_CASE(identifier_followed_by_special_character)
