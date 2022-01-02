@@ -169,7 +169,12 @@ namespace lpg
             return std::nullopt;
         }
 
-        expect_special_character(special_character::assign);
+        const bool is_assigment = expect_special_character(special_character::assign);
+        if (!is_assigment)
+        {
+            return std::nullopt;
+        }
+
         std::optional<expression> initializer = parse_expression();
         if (!initializer)
         {
@@ -179,23 +184,27 @@ namespace lpg
         return declaration{name.value(), std::make_unique<expression>(std::move(initializer.value()))};
     }
 
-    void parser::expect_special_character(special_character expected)
+    bool parser::expect_special_character(special_character expected)
     {
         const std::optional<token> token = tokens.pop();
         if (!token)
         {
             on_error(parse_error{"Expected special character but got end of stream"});
-            return;
+            return false;
         }
         if (std::holds_alternative<special_character>(token.value()))
         {
             if (expected != std::get<special_character>(token.value()))
             {
-                on_error(parse_error{"unexpected special character"});
+                on_error(parse_error{"Expected a different special character"});
             }
-            return;
+            else
+            {
+                return true;
+            }
         }
-        on_error(parse_error{"Unexpected something"});
+        on_error(parse_error{"Expected something else"});
+        return false;
     }
 
     std::optional<expression> parser::parse_expression()
@@ -227,7 +236,7 @@ namespace lpg
                                return parse_parentheses();
                            case special_character::right_parenthesis:
                                on_error(parse_error({"Can not have a closing parenthesis here."}));
-break;
+                               break;
                            case special_character::left_brace:
                                return parse_braces();
                            case special_character::right_brace:

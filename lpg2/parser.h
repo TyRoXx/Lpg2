@@ -85,6 +85,6 @@ namespace lpg
         std::optional<declaration> parse_declaration();
 
         std::optional<identifier> expect_identifier();
-        void expect_special_character(special_character special_character);
+        bool expect_special_character(special_character special_character);
     };
 } // namespace lpg
