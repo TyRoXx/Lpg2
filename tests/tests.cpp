@@ -125,6 +125,11 @@ BOOST_AUTO_TEST_CASE(invalid_content_inside_parenthese)
                                        "Can not have a slash here."});
 }
 
+BOOST_AUTO_TEST_CASE(parse_argument_error)
+{
+    expect_compilation_error("f(", {"Unexpected end of stream", "Could not parse argument of the function"});
+}
+
 BOOST_AUTO_TEST_CASE(missing_initializer_for_declaration)
 {
     expect_compilation_error(
