@@ -133,6 +133,30 @@ BOOST_AUTO_TEST_CASE(invalid_string_position)
     expect_compilation_error(R"(let a "Hello world")", {"Expected something else"}, lpg::sequence{});
 }
 
+BOOST_AUTO_TEST_CASE(only_let)
+{
+    expect_compilation_error(
+        "let", {"Expected identifier but got end of stream", "Expected variable name but found end of file"},
+        lpg::sequence{});
+}
+
+BOOST_AUTO_TEST_CASE(let_followed_by_non_identifier)
+{
+
+    expect_compilation_error("let =", {"Expected variable name but found end of file"}, lpg::sequence{});
+}
+
+BOOST_AUTO_TEST_CASE(declaration_missing_assignment)
+{
+    expect_compilation_error("let a", {"Expected special character but got end of stream"}, lpg::sequence{});
+}
+
+BOOST_AUTO_TEST_CASE(declaration_with_incorrect_operator)
+{
+    expect_compilation_error(
+        "let a )", {"Expected a different special character", "Expected something else"}, lpg::sequence{});
+}
+
 BOOST_AUTO_TEST_CASE(unterminated_string)
 {
     BOOST_CHECK_THROW(auto a = lpg::run(R"("Hello world)", fail_on_error), std::invalid_argument);
@@ -150,7 +174,7 @@ BOOST_AUTO_TEST_CASE(only_slash)
 
 BOOST_AUTO_TEST_CASE(line_beginning_with_assign_operator)
 {
-    expect_compilation_error( "=", {"Can not have an assignment operator here."}, lpg::sequence{});
+    expect_compilation_error("=", {"Can not have an assignment operator here."}, lpg::sequence{});
 }
 
 BOOST_AUTO_TEST_CASE(identifier_followed_by_special_character)
