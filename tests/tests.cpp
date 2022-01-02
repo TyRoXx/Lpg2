@@ -12,14 +12,15 @@ namespace
         return buffer.str();
     }
 
-    void expect_compilation_error(const std::string program, const std::vector<std::string> expected_errors)
+    void expect_compilation_error(const std::string program, const std::vector<std::string> expected_errors,
+                                  lpg::sequence const &expected_program)
     {
         std::vector<std::string> error_messages;
         auto const on_error = [&error_messages](lpg::parse_error error) -> void {
             error_messages.push_back(error.error_message);
         };
         lpg::sequence output = lpg::compile(program, on_error);
-        BOOST_TEST(output.elements.empty());
+        BOOST_TEST(expected_program == output);
         BOOST_CHECK_EQUAL_COLLECTIONS(
             expected_errors.begin(), expected_errors.end(), error_messages.begin(), error_messages.end());
     }
@@ -83,6 +84,42 @@ print(a))",
                                                                        fail_on_error));
 }
 
+BOOST_AUTO_TEST_CASE(block_empty)
+{
+    BOOST_TEST(lpg::run_result{""} == lpg::run(R"({})", fail_on_error));
+}
+
+BOOST_AUTO_TEST_CASE(block_non_empty)
+{
+    BOOST_TEST(lpg::run_result{"hello"} == lpg::run(R"({print("hello")})", fail_on_error));
+}
+
+BOOST_AUTO_TEST_CASE(block_nested_simple)
+{
+    BOOST_TEST(lpg::run_result{"hello"} == lpg::run(R"({{print("hello")}})", fail_on_error));
+}
+
+BOOST_AUTO_TEST_CASE(block_nested_complex)
+{
+    BOOST_TEST(lpg::run_result{"abc"} == lpg::run(R"(
+{
+    print("a")
+    {
+        print("b")
+        {}
+    }
+    print("c")
+})",
+                                                  fail_on_error));
+}
+
+BOOST_AUTO_TEST_CASE(block_missing_closing_brace)
+{
+    std::vector<lpg::expression> block;
+    block.emplace_back(lpg::expression{lpg::sequence{}});
+    expect_compilation_error("{", {"Missing closing brace '}' before end of file"}, lpg::sequence{std::move(block)});
+}
+
 BOOST_AUTO_TEST_CASE(variable_redeclaration)
 {
     BOOST_CHECK_THROW(auto a = lpg::run(R"(let a = "Hello world"
@@ -118,29 +155,32 @@ BOOST_AUTO_TEST_CASE(line_beginning_with_assign_operator)
 
 BOOST_AUTO_TEST_CASE(identifier_followed_by_special_character)
 {
-    expect_compilation_error("a =", {"Can not have an assignment operator here."});
+    expect_compilation_error("a =", {"Can not have an assignment operator here."}, lpg::sequence{});
 }
 
 BOOST_AUTO_TEST_CASE(identifier_followed_by_slash)
 {
-    expect_compilation_error("a /", {"Can not have a slash here."});
+    expect_compilation_error("a /", {"Can not have a slash here."}, lpg::sequence{});
 }
 
 BOOST_AUTO_TEST_CASE(invalid_content_inside_parenthese)
 {
-    expect_compilation_error("(a /)", {"Can not have a slash here.", "Can not parse expression inside parenthese.",
-                                       "Can not have a slash here."});
+    expect_compilation_error(
+        "(a /)",
+        {"Can not have a slash here.", "Can not parse expression inside parenthese.", "Can not have a slash here."},
+        lpg::sequence{});
 }
 
 BOOST_AUTO_TEST_CASE(parse_argument_error)
 {
-    expect_compilation_error("f(", {"Unexpected end of stream", "Could not parse argument of the function"});
+    expect_compilation_error(
+        "f(", {"Unexpected end of stream", "Could not parse argument of the function"}, lpg::sequence{});
 }
 
 BOOST_AUTO_TEST_CASE(missing_initializer_for_declaration)
 {
     expect_compilation_error(
-        R"(let a = )", {"Unexpected end of stream", "Invalid initializer value for identifier: a"});
+        R"(let a = )", {"Unexpected end of stream", "Invalid initializer value for identifier: a"}, lpg::sequence{});
 }
 
 BOOST_AUTO_TEST_CASE(trailing_new_line)

@@ -21,6 +21,8 @@ namespace lpg
     {
         left_parenthesis,
         right_parenthesis,
+        left_brace,
+        right_brace,
         slash,
         assign
     };

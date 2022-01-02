@@ -10,7 +10,7 @@ namespace lpg
     {
         scanner tokens{source};
         parser parser(tokens, on_error);
-        return parser.parse_sequence();
+        return parser.parse_sequence(false);
     }
 
     namespace

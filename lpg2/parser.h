@@ -16,6 +16,9 @@ namespace lpg
         std::string message;
     };
 
+    std::ostream &operator<<(std::ostream &out, const print &value);
+    bool operator==(const print &left, const print &right) noexcept;
+
     struct expression;
 
     struct call
@@ -24,10 +27,16 @@ namespace lpg
         std::unique_ptr<expression> argument;
     };
 
+    std::ostream &operator<<(std::ostream &out, const call &value);
+    bool operator==(const call &left, const call &right) noexcept;
+
     struct sequence
     {
         std::vector<expression> elements;
     };
+
+    std::ostream &operator<<(std::ostream &out, const sequence &value);
+    bool operator==(const sequence &left, const sequence &right) noexcept;
 
     struct declaration
     {
@@ -35,10 +44,16 @@ namespace lpg
         std::unique_ptr<expression> initializer;
     };
 
+    std::ostream &operator<<(std::ostream &out, const declaration &value);
+    bool operator==(const declaration &left, const declaration &right) noexcept;
+
     struct expression
     {
         std::variant<string_literal, identifier, call, sequence, declaration> value;
     };
+
+    std::ostream &operator<<(std::ostream &out, const expression &value);
+    bool operator==(const expression &left, const expression &right) noexcept;
 
     std::optional<non_comment> peek_next_non_comment(scanner &tokens);
     std::optional<non_comment> pop_next_non_comment(scanner &tokens);
@@ -60,11 +75,12 @@ namespace lpg
         scanner tokens;
         std::function<void(parse_error)> on_error;
 
-        sequence parse_sequence();
+        sequence parse_sequence(bool is_in_braces);
 
     private:
         std::optional<expression> parse_expression();
         std::optional<expression> parse_parentheses();
+        std::optional<expression> parse_braces();
         std::optional<expression> parse_call(expression callee);
         std::optional<declaration> parse_declaration();
     };
