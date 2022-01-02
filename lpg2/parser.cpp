@@ -236,18 +236,18 @@ namespace lpg
                                return parse_parentheses();
                            case special_character::right_parenthesis:
                                on_error(parse_error({"Can not have a closing parenthesis here."}));
-                               break;
+                               return std::nullopt;
                            case special_character::left_brace:
                                return parse_braces();
                            case special_character::right_brace:
                                on_error(parse_error({"Can not have a closing parenthesis here."}));
-                               break;
+                               return std::nullopt;
                            case special_character::slash:
                                on_error(parse_error({"Can not have a slash here."}));
-                               break;
+                               return std::nullopt;
                            case special_character::assign:
                                on_error(parse_error({"Can not have an assignment operator here."}));
-                               break;
+                               return std::nullopt;
                            }
                            LPG_UNREACHABLE();
                        },
