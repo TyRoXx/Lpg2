@@ -2,6 +2,7 @@ pushd vcpkg || exit /B 1
 :: disable annoying message about metrics (we don't really care about metrics, but there seems to be no other way to make the message go away)
 call bootstrap-vcpkg.bat -disableMetrics || exit /B 1
 :: vcpkg install is missing a way to pass a triplet, so we have to set it for every package individually:
-.\vcpkg.exe install --disable-metrics boost-system:x64-windows-static boost-test:x64-windows-static boost-outcome:x64-windows-static boost-filesystem:x64-windows-static ms-gsl:x64-windows-static benchmark:x64-windows-static || exit 1
-popd || exit 1
-.\vcpkg\downloads\tools\cmake-3.21.1-windows\cmake-3.21.1-windows-i386\bin\cmake.exe -B ..\Lpg2_build -S . -G "Visual Studio 16 2019" -A x64 || exit 1
+.\vcpkg.exe install --disable-metrics --overlay-triplets=.. --triplet=vcpkg-msvc boost-system boost-test boost-outcome boost-filesystem ms-gsl benchmark || exit /B 1
+.\vcpkg.exe upgrade --no-dry-run || exit /B 1
+popd || exit /B 1
+.\vcpkg\downloads\tools\cmake-3.24.0-windows\cmake-3.24.0-windows-i386\bin\cmake.exe -B ..\Lpg2_build2022 -S . -G "Visual Studio 17 2022" -A x64 || exit 1
