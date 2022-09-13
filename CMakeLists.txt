@@ -1,8 +1,8 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.24)
 project(Lpg2 LANGUAGES CXX)
 
 if(MSVC)
-    set(VCPKG_TARGET_TRIPLET x64-windows-static)
+    set(VCPKG_TARGET_TRIPLET vcpkg-msvc)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 include(vcpkg/scripts/buildsystems/vcpkg.cmake)
@@ -27,9 +27,11 @@ if(UNIX)
 endif()
 
 set(Boost_USE_STATIC_LIBS ON)
-find_package(Boost COMPONENTS system unit_test_framework filesystem REQUIRED)
+find_package(Boost COMPONENTS system filesystem REQUIRED)
 
 find_package(benchmark REQUIRED)
+
+find_package(Catch2 3 REQUIRED)
 
 if(UNIX)
     add_definitions(
