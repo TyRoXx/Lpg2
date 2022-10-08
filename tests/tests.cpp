@@ -32,8 +32,8 @@ namespace
 
 TEST_CASE("print_run_result")
 {
-    CHECK(format(lpg::run_result{""}) == "success: ");
-    CHECK(format(lpg::run_result{std::nullopt}) == "error");
+    CHECK(format(lpg::run_result{""}) == "0: ");
+    CHECK(format(lpg::run_result{lpg::evaluate_error()}) == "1: error");
 }
 
 TEST_CASE("empty")

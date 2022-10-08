@@ -2,7 +2,23 @@
 #include "overloaded.h"
 #include "parser.h"
 #include "tokenizer.h"
+#include <boost/outcome/basic_result.hpp>
+#include <boost/outcome/policy/fail_to_compile_observers.hpp>
+#include <boost/outcome/try.hpp>
 #include <variant>
+
+bool lpg::operator==(evaluate_error const &left, evaluate_error const &right)
+{
+    (void)left;
+    (void)right;
+    return true;
+}
+
+std::ostream &lpg::operator<<(std::ostream &out, evaluate_error const &error)
+{
+    (void)error;
+    return out << "error";
+}
 
 namespace lpg
 {
@@ -15,12 +31,17 @@ namespace lpg
 
     namespace
     {
-        value evaluate(expression const &to_evaluate, local_variable_map &locals, std::string &output);
+        using evaluate_result = boost::outcome_v2::basic_result<value, evaluate_error,
+                                                                boost::outcome_v2::policy::fail_to_compile_observers>;
 
-        value evaluate_call(call const &function, local_variable_map &locals, std::string &output)
+        [[nodiscard]] evaluate_result evaluate(expression const &to_evaluate, local_variable_map &locals,
+                                               std::string &output);
+
+        [[nodiscard]] evaluate_result evaluate_call(call const &function, local_variable_map &locals,
+                                                    std::string &output)
         {
-            value const callee = evaluate(*function.callee, locals, output);
-            value const argument = evaluate(*function.argument, locals, output);
+            BOOST_OUTCOME_TRY(value const callee, evaluate(*function.callee, locals, output));
+            BOOST_OUTCOME_TRY(value const argument, evaluate(*function.argument, locals, output));
 
             std::visit(overloaded{
                            [&output](builtin_functions const callee, std::string const &argument) {
@@ -39,20 +60,28 @@ namespace lpg
             return nullptr;
         }
 
-        void evaluate_sequence(sequence const &to_evaluate, local_variable_map &locals, std::string &output)
+        [[nodiscard]] std::optional<evaluate_error> evaluate_sequence(sequence const &to_evaluate,
+                                                                      local_variable_map &locals, std::string &output)
         {
             for (expression const &element : to_evaluate.elements)
             {
-                evaluate(element, locals, output);
+                evaluate_result const result = evaluate(element, locals, output);
+                if (result.has_error())
+                {
+                    return result.assume_error();
+                }
             }
+            return std::nullopt;
         }
 
-        value evaluate(expression const &to_evaluate, local_variable_map &locals, std::string &output)
+        evaluate_result evaluate(expression const &to_evaluate, local_variable_map &locals, std::string &output)
         {
             return std::visit(
                 overloaded{
-                    [](string_literal constant) -> value { return value{std::string{constant.inner_content}}; },
-                    [&locals](identifier name) -> value {
+                    [](string_literal constant) -> evaluate_result {
+                        return value{std::string{constant.inner_content}};
+                    },
+                    [&locals](identifier name) -> evaluate_result {
                         if (name.content == "print")
                         {
                             return builtin_functions::print;
@@ -64,25 +93,29 @@ namespace lpg
                         }
                         return found->second;
                     },
-                    [&output, &locals](call const &function) -> value {
+                    [&output, &locals](call const &function) -> evaluate_result {
                         return evaluate_call(function, locals, output);
                     },
-                    [&output, &locals](sequence const &list) -> value {
-                        evaluate_sequence(list, locals, output);
-                        return nullptr;
+                    [&output, &locals](sequence const &list) -> evaluate_result {
+                        std::optional<evaluate_error> const error = evaluate_sequence(list, locals, output);
+                        if (error)
+                        {
+                            return *error;
+                        }
+                        return value(nullptr);
                     },
-                    [&output, &locals](declaration const &declaration_) -> value {
+                    [&output, &locals](declaration const &declaration_) -> evaluate_result {
                         output += "Declaring ";
                         output += declaration_.name.content;
                         output += "\n";
-                        value initial_value = evaluate(*declaration_.initializer, locals, output);
+                        BOOST_OUTCOME_TRY(value initial_value, evaluate(*declaration_.initializer, locals, output));
                         bool const inserted =
                             locals.insert(std::make_pair(declaration_.name.content, std::move(initial_value))).second;
                         if (!inserted)
                         {
                             throw std::invalid_argument("Redeclaration of " + std::string(declaration_.name.content));
                         }
-                        return nullptr;
+                        return value(nullptr);
                     }},
                 to_evaluate.value);
         }
@@ -95,6 +128,10 @@ lpg::run_result lpg::run(std::string_view source, std::function<void(parse_error
     sequence program = compile(source, move(on_error));
     local_variable_map locals;
     std::string output;
-    evaluate_sequence(program, locals, output);
-    return run_result{std::move(output)};
+    std::optional<evaluate_error> const error = evaluate_sequence(program, locals, output);
+    if (error)
+    {
+        return *error;
+    }
+    return std::move(output);
 }

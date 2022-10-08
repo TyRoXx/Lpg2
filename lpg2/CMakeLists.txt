@@ -1,5 +1,6 @@
 file(GLOB sources *.h *.cpp)
 add_library(lpg2 ${sources})
+target_link_libraries(lpg2 Boost::system)
 if(LPG2_CLANG_FORMAT)
 	add_dependencies(lpg2 clang-format)
 endif()
