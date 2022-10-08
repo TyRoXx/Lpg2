@@ -11,12 +11,14 @@ namespace lpg
 {
     enum class evaluate_error_type
     {
-        not_callable
+        not_callable,
+        unknown_identifier
     };
 
     struct evaluate_error
     {
         evaluate_error_type type;
+        std::string identifier;
     };
 
     bool operator==(evaluate_error const &left, evaluate_error const &right);

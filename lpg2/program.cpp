@@ -9,12 +9,12 @@
 
 bool lpg::operator==(evaluate_error const &left, evaluate_error const &right)
 {
-    return (left.type == right.type);
+    return (left.type == right.type) && (left.identifier == right.identifier);
 }
 
 std::ostream &lpg::operator<<(std::ostream &out, evaluate_error const &error)
 {
-    return out << static_cast<int>(error.type);
+    return out << static_cast<int>(error.type) << " " << error.identifier;
 }
 
 namespace lpg
@@ -87,7 +87,7 @@ namespace lpg
                         auto const found = locals.find(std::string(name.content));
                         if (found == locals.end())
                         {
-                            throw std::invalid_argument("Unknown identifier " + std::string(name.content));
+                            return evaluate_error{evaluate_error_type::unknown_identifier, std::string(name.content)};
                         }
                         return found->second;
                     },
