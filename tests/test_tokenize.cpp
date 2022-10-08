@@ -5,6 +5,7 @@ TEST_CASE("scan_nothing")
 {
     auto s = lpg::scanner("");
     CHECK(!s.peek());
+    CHECK(!s.has_failed);
 }
 
 TEST_CASE("scan_invalid_token")
@@ -12,6 +13,7 @@ TEST_CASE("scan_invalid_token")
     auto s = lpg::scanner("+");
     std::optional<lpg::token> const t = s.peek();
     CHECK(!t.has_value());
+    CHECK(!s.has_failed);
 }
 
 TEST_CASE("scan_peek_token")
@@ -21,6 +23,7 @@ TEST_CASE("scan_peek_token")
     CHECK(t.has_value());
     lpg::string_literal literal = std::get<lpg::string_literal>(t.value());
     CHECK(literal.inner_content == "Hello");
+    CHECK(!s.has_failed);
 }
 
 TEST_CASE("scan_string")
@@ -30,15 +33,14 @@ TEST_CASE("scan_string")
     CHECK(t.has_value());
     lpg::string_literal const string = std::get<lpg::string_literal>(t.value());
     CHECK(string.inner_content == "Hello");
+    CHECK(!s.has_failed);
 }
 
 TEST_CASE("scan_invalid_string")
 {
     auto s = lpg::scanner("\"Hello");
-
-    std::optional<lpg::token> t;
-    CHECK_THROWS_AS(t = s.pop(), std::invalid_argument);
-    CHECK(!t.has_value());
+    CHECK(std::nullopt == s.pop());
+    CHECK(s.has_failed);
 }
 
 TEST_CASE("scan_parentheses")
@@ -57,6 +59,7 @@ TEST_CASE("scan_parentheses")
     CHECK(second_paren.has_value());
     lpg::special_character const character1 = std::get<lpg::special_character>(second_paren.value());
     CHECK(character1 == lpg::special_character::right_parenthesis);
+    CHECK(!s.has_failed);
 }
 
 TEST_CASE("scan_identifier")
@@ -67,6 +70,7 @@ TEST_CASE("scan_identifier")
     CHECK(t.has_value());
     lpg::identifier id = std::get<lpg::identifier>(t.value());
     CHECK(id.content == "test");
+    CHECK(!s.has_failed);
 }
 
 TEST_CASE("scan_slash")
@@ -77,6 +81,7 @@ TEST_CASE("scan_slash")
     CHECK(t.has_value());
     lpg::special_character const slash = std::get<lpg::special_character>(t.value());
     CHECK(slash == lpg::special_character::slash);
+    CHECK(!s.has_failed);
 }
 
 TEST_CASE("scan_slash_end_of_file")
@@ -87,6 +92,7 @@ TEST_CASE("scan_slash_end_of_file")
     CHECK(t.has_value());
     lpg::special_character const slash = std::get<lpg::special_character>(t.value());
     CHECK(slash == lpg::special_character::slash);
+    CHECK(!s.has_failed);
 }
 
 TEST_CASE("scan_comment_end_of_file")
@@ -98,6 +104,7 @@ TEST_CASE("scan_comment_end_of_file")
 
     lpg::comment comment = std::get<lpg::comment>(t.value());
     CHECK(comment.inner_content == "Just a comment");
+    CHECK(!s.has_failed);
 }
 
 TEST_CASE("scan_comment_end_of_line")
@@ -106,6 +113,7 @@ TEST_CASE("scan_comment_end_of_line")
     std::optional<lpg::non_comment> const t = lpg::peek_next_non_comment(s);
     CHECK(!s.peek());
     CHECK(!t.has_value());
+    CHECK(!s.has_failed);
 }
 
 TEST_CASE("scan_comment")
@@ -117,6 +125,7 @@ TEST_CASE("scan_comment")
 
     lpg::identifier id = std::get<lpg::identifier>(t.value());
     CHECK(id.content == "test");
+    CHECK(!s.has_failed);
 }
 
 TEST_CASE("print_special_character")
@@ -157,6 +166,7 @@ TEST_CASE("ignore_spaces")
     std::optional<lpg::non_comment> const id_token = lpg::pop_next_non_comment(s);
     CHECK(!s.peek());
     CHECK(id_token.value() == lpg::non_comment{lpg::identifier{"a"}});
+    CHECK(!s.has_failed);
 }
 
 TEST_CASE("scan_assign")
@@ -165,4 +175,5 @@ TEST_CASE("scan_assign")
     std::optional<lpg::non_comment> const let_token = lpg::pop_next_non_comment(s);
     CHECK(!s.peek());
     CHECK(let_token.value() == lpg::non_comment{lpg::special_character::assign});
+    CHECK(!s.has_failed);
 }

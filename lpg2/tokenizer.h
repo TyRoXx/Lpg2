@@ -62,6 +62,7 @@ namespace lpg
         std::string_view::iterator end;
 
         std::optional<token> peeked;
+        bool has_failed = false;
 
         explicit scanner(std::string_view source)
             : next(source.begin())

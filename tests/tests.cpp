@@ -160,7 +160,7 @@ TEST_CASE("declaration_with_incorrect_operator")
 
 TEST_CASE("unterminated_string")
 {
-    CHECK_THROWS_AS(lpg::run(R"("Hello world)", fail_on_error), std::invalid_argument);
+    expect_compilation_error(R"("Hello world)", {"Tokenization failed"}, lpg::sequence{});
 }
 
 TEST_CASE("mismatching_closing_parenthesis")

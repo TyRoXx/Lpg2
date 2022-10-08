@@ -113,22 +113,27 @@ std::optional<lpg::token> lpg::scanner::peek()
     }
     if (head == '"')
     {
-        ++next;
-        std::string_view::iterator literal_begin = next;
+        // only update next if the string literal is valid, so that you can see where the invalid literal began
+        auto i = next;
+        ++i;
+        std::string_view::iterator literal_begin = i;
         for (;;)
         {
-            if (next == end)
+            if (i == end)
             {
-                throw std::invalid_argument("invalid string literal");
+                has_failed = true;
+                peeked = std::nullopt;
+                return peeked;
             }
-            if (*next == '"')
+            if (*i == '"')
             {
                 break;
             }
-            ++next;
+            ++i;
         }
-        std::string_view::iterator literal_end = next;
-        ++next;
+        std::string_view::iterator literal_end = i;
+        ++i;
+        next = i;
         peeked = token{string_literal{std::string_view(&*literal_begin, literal_end - literal_begin)}};
         return peeked;
     }

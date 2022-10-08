@@ -21,9 +21,13 @@ namespace lpg
 {
     sequence compile(std::string_view source, std::function<void(parse_error)> on_error)
     {
-        scanner tokens{source};
-        parser parser(tokens, on_error);
-        return parser.parse_sequence(false);
+        parser parser(scanner{source}, on_error);
+        sequence parsed = parser.parse_sequence(false);
+        if (parser.tokens.has_failed)
+        {
+            on_error(lpg::parse_error{"Tokenization failed"});
+        }
+        return parsed;
     }
 
     namespace
