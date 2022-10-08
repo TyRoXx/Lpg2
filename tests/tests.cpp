@@ -123,10 +123,10 @@ TEST_CASE("block_missing_closing_brace")
 
 TEST_CASE("variable_redeclaration")
 {
-    CHECK_THROWS_AS(lpg::run(R"(let a = "Hello world"
+    CHECK(lpg::run_result{lpg::evaluate_error{lpg::evaluate_error_type::redeclaration, "a"}} ==
+          lpg::run(R"(let a = "Hello world"
 let a = "Hello world")",
-                             fail_on_error),
-                    std::invalid_argument);
+                   fail_on_error));
 }
 
 TEST_CASE("invalid_string_position")

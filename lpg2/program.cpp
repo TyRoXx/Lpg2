@@ -111,7 +111,8 @@ namespace lpg
                             locals.insert(std::make_pair(declaration_.name.content, std::move(initial_value))).second;
                         if (!inserted)
                         {
-                            throw std::invalid_argument("Redeclaration of " + std::string(declaration_.name.content));
+                            return evaluate_error{
+                                evaluate_error_type::redeclaration, std::string(declaration_.name.content)};
                         }
                         return value(nullptr);
                     }},

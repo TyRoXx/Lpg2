@@ -12,7 +12,8 @@ namespace lpg
     enum class evaluate_error_type
     {
         not_callable,
-        unknown_identifier
+        unknown_identifier,
+        redeclaration
     };
 
     struct evaluate_error
