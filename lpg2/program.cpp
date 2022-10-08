@@ -9,15 +9,12 @@
 
 bool lpg::operator==(evaluate_error const &left, evaluate_error const &right)
 {
-    (void)left;
-    (void)right;
-    return true;
+    return (left.type == right.type);
 }
 
 std::ostream &lpg::operator<<(std::ostream &out, evaluate_error const &error)
 {
-    (void)error;
-    return out << "error";
+    return out << static_cast<int>(error.type);
 }
 
 namespace lpg
@@ -43,21 +40,22 @@ namespace lpg
             BOOST_OUTCOME_TRY(value const callee, evaluate(*function.callee, locals, output));
             BOOST_OUTCOME_TRY(value const argument, evaluate(*function.argument, locals, output));
 
-            std::visit(overloaded{
-                           [&output](builtin_functions const callee, std::string const &argument) {
-                               switch (callee)
-                               {
-                               case builtin_functions::print:
-                                   output += argument;
-                                   break;
-                               }
-                           },
-                           [](auto const &, auto const &) {
-                               throw std::invalid_argument("Wrong call arguments. Or function is not callable");
-                           },
-                       },
-                       callee, argument);
-            return nullptr;
+            return std::visit(
+                overloaded{
+                    [&output](builtin_functions const callee, std::string const &argument) -> evaluate_result {
+                        switch (callee)
+                        {
+                        case builtin_functions::print:
+                            output += argument;
+                            break;
+                        }
+                        return nullptr;
+                    },
+                    [](auto const &, auto const &) -> evaluate_result {
+                        return evaluate_error{evaluate_error_type::not_callable};
+                    },
+                },
+                callee, argument);
         }
 
         [[nodiscard]] std::optional<evaluate_error> evaluate_sequence(sequence const &to_evaluate,

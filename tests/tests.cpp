@@ -33,7 +33,7 @@ namespace
 TEST_CASE("print_run_result")
 {
     CHECK(format(lpg::run_result{""}) == "0: ");
-    CHECK(format(lpg::run_result{lpg::evaluate_error()}) == "1: error");
+    CHECK(format(lpg::run_result{lpg::evaluate_error(lpg::evaluate_error_type::not_callable)}) == "1: 0");
 }
 
 TEST_CASE("empty")
@@ -63,7 +63,8 @@ TEST_CASE("unknown_function")
 
 TEST_CASE("argument_type_mismatch")
 {
-    CHECK_THROWS_AS(lpg::run(R"aaa(print(print))aaa", fail_on_error), std::invalid_argument);
+    CHECK(lpg::run_result{lpg::evaluate_error{lpg::evaluate_error_type::not_callable}} ==
+          lpg::run(R"aaa(print(print))aaa", fail_on_error));
 }
 
 TEST_CASE("parentheses")

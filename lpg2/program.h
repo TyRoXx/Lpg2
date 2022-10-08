@@ -9,8 +9,14 @@
 
 namespace lpg
 {
+    enum class evaluate_error_type
+    {
+        not_callable
+    };
+
     struct evaluate_error
     {
+        evaluate_error_type type;
     };
 
     bool operator==(evaluate_error const &left, evaluate_error const &right);
