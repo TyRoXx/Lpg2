@@ -21,7 +21,7 @@ static void benchmark_tokenizer(benchmark::State &state)
         lpg::scanner s(string);
         for (;;)
         {
-            auto t = s.peek();
+            auto t = s.pop();
             if (!t.has_value())
             {
                 break;
