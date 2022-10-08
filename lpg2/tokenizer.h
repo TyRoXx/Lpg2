@@ -73,6 +73,14 @@ namespace lpg
         [[nodiscard]] std::optional<token> pop();
         [[nodiscard]] std::optional<token> peek();
     };
+
+    template <class T>
+    [[nodiscard]] std::string format(T const &value)
+    {
+        std::ostringstream buffer;
+        buffer << value;
+        return buffer.str();
+    }
 } // namespace lpg
 
 namespace std

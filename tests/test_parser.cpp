@@ -102,3 +102,10 @@ TEST_CASE("missing_initializer_for_declaration")
     expect_compilation_error(
         R"(let a = )", {"Unexpected end of stream", "Invalid initializer value for identifier: a"}, lpg::sequence{});
 }
+
+TEST_CASE("print_parse_error")
+{
+    std::ostringstream s;
+    s << lpg::parse_error{"content"};
+    CHECK(s.str() == "content");
+}
