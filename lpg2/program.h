@@ -36,5 +36,4 @@ namespace lpg
     using local_variable_map = std::map<std::string, value>;
 
     [[nodiscard]] run_result run(std::string_view source, std::function<void(parse_error)> on_error);
-    [[nodiscard]] lpg::sequence compile(std::string_view source, std::function<void(parse_error)> on_error);
 } // namespace lpg

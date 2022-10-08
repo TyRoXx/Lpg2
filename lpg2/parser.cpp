@@ -351,4 +351,15 @@ namespace lpg
         return expression{call{std::make_unique<expression>(std::move(callee)),
                                std::make_unique<expression>(std::move(argument.value()))}};
     }
+
+    sequence compile(std::string_view source, std::function<void(parse_error)> on_error)
+    {
+        parser parser(scanner{source}, on_error);
+        sequence parsed = parser.parse_sequence(false);
+        if (parser.tokens.has_failed)
+        {
+            on_error(lpg::parse_error{"Tokenization failed"});
+        }
+        return parsed;
+    }
 } // namespace lpg
