@@ -9,7 +9,16 @@
 
 namespace lpg
 {
-    using non_comment = std::variant<identifier, special_character, string_literal>;
+    using non_comment_content = std::variant<identifier, special_character, string_literal>;
+
+    struct non_comment
+    {
+        non_comment_content content;
+        source_location location;
+    };
+
+    std::ostream &operator<<(std::ostream &out, const non_comment &value);
+    bool operator==(const non_comment &left, const non_comment &right) noexcept;
 
     struct print
     {
@@ -61,8 +70,12 @@ namespace lpg
     struct parse_error
     {
         std::string error_message;
+        source_location where;
+
+        parse_error(std::string error_message, source_location where);
     };
 
+    bool operator==(const parse_error &left, const parse_error &right) noexcept;
     std::ostream &operator<<(std::ostream &out, const parse_error &value);
 
     struct parser
@@ -84,7 +97,7 @@ namespace lpg
         std::optional<expression> parse_call(expression callee);
         std::optional<declaration> parse_declaration();
 
-        std::optional<identifier> expect_identifier();
+        std::tuple<std::optional<identifier>, source_location> expect_identifier();
         bool expect_special_character(special_character special_character);
     };
 

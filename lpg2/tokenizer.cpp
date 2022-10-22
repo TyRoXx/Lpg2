@@ -1,6 +1,16 @@
 #include "tokenizer.h"
 #include <stdexcept>
 
+lpg::source_location::source_location(size_t line, size_t column) noexcept
+    : line(line)
+    , column(column)
+{
+}
+
+std::ostream &lpg::operator<<(std::ostream &out, const source_location &value)
+{
+    return out << (value.line + 1) << ":" << (value.column + 1);
+}
 std::ostream &lpg::operator<<(std::ostream &out, const lpg::identifier &value)
 {
     return out << value.content;
@@ -20,6 +30,11 @@ std::ostream &lpg::operator<<(std::ostream &out, const lpg::string_literal &valu
 std::ostream &lpg::operator<<(std::ostream &out, const comment &value)
 {
     return out << "/*" << value.inner_content << "*/";
+}
+
+std::ostream &lpg::operator<<(std::ostream &out, const token &value)
+{
+    return out << value.content << "(" << value.location << ")";
 }
 
 std::optional<lpg::token> lpg::scanner::pop()
@@ -42,8 +57,15 @@ std::optional<lpg::token> lpg::scanner::peek()
     }
 
     char head = *next;
+
     while (is_whitespace(head))
     {
+        if (head == '\n')
+        {
+            ++next_location.line;
+            next_location.column = 0;
+        }
+
         next++;
         if (next == end)
         {
@@ -55,40 +77,47 @@ std::optional<lpg::token> lpg::scanner::peek()
     if (head == '(')
     {
         ++next;
+        ++next_location.column;
         peeked = token{special_character::left_parenthesis};
         return peeked;
     }
     if (head == ')')
     {
         ++next;
+        ++next_location.column;
         peeked = token{special_character::right_parenthesis};
         return peeked;
     }
     if (head == '{')
     {
         ++next;
+        ++next_location.column;
         peeked = token{special_character::left_brace};
         return peeked;
     }
     if (head == '}')
     {
         ++next;
+        ++next_location.column;
         peeked = token{special_character::right_brace};
         return peeked;
     }
     if (head == '=')
     {
         ++next;
+        ++next_location.column;
         peeked = token{special_character::assign};
         return peeked;
     }
     if (head == '/')
     {
         ++next;
+        ++next_location.column;
 
         if ((next != end) && (*next == '/'))
         {
             ++next;
+            ++next_location.column;
             auto const literal_begin = next;
             for (;;)
             {
@@ -102,6 +131,7 @@ std::optional<lpg::token> lpg::scanner::peek()
                     break;
                 }
                 ++next;
+                ++next_location.column;
             }
             auto const literal_end = next;
             peeked = token{comment{std::string_view(&*literal_begin, literal_end - literal_begin)}};
@@ -134,6 +164,7 @@ std::optional<lpg::token> lpg::scanner::peek()
         std::string_view::iterator literal_end = i;
         ++i;
         next = i;
+        next_location.column += (next - literal_begin);
         peeked = token{string_literal{std::string_view(&*literal_begin, literal_end - literal_begin)}};
         return peeked;
     }
@@ -141,9 +172,11 @@ std::optional<lpg::token> lpg::scanner::peek()
     {
         std::string_view::iterator identifier_begin = next;
         ++next;
+        ++next_location.column;
         while ((next != end) && is_identifier_letter(*next))
         {
             ++next;
+            ++next_location.column;
         }
         peeked = token{identifier{std::string_view(&*identifier_begin, next - identifier_begin)}};
         return peeked;

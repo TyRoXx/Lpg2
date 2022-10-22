@@ -14,6 +14,16 @@
 
 namespace lpg
 {
+    std::ostream &operator<<(std::ostream &out, const non_comment &value)
+    {
+        return out << value.content << "(" << value.location << ")";
+    }
+
+    bool operator==(const non_comment &left, const non_comment &right) noexcept
+    {
+        return (left.content == right.content) && (left.location == right.location);
+    }
+
     std::ostream &operator<<(std::ostream &out, const print &value)
     {
         return out << "print " << value.message;
@@ -103,18 +113,21 @@ namespace lpg
     {
         for (;;)
         {
-            std::optional<token> peeked = tokens.peek();
-            if (!peeked)
+            std::optional<token> maybe_peeked = tokens.peek();
+            if (!maybe_peeked)
             {
                 return std::nullopt;
             }
 
+            token &peeked = *maybe_peeked;
             std::optional<non_comment> result =
                 std::visit(overloaded{
                                [](comment const &) -> std::optional<non_comment> { return std::nullopt; },
-                               [](auto value) -> std::optional<non_comment> { return value; },
+                               [&peeked](auto value) -> std::optional<non_comment> {
+                                   return non_comment{std::move(value), peeked.location};
+                               },
                            },
-                           peeked.value());
+                           peeked.content);
 
             if (result.has_value())
             {
@@ -137,40 +150,54 @@ namespace lpg
         return peeked;
     }
 
-    std::ostream &operator<<(std::ostream &out, const parse_error &value)
+    parse_error::parse_error(std::string error_message, source_location where)
+        : error_message(move(error_message))
+        , where(where)
     {
-        return out << value.error_message;
     }
 
-    std::optional<identifier> parser::expect_identifier()
+    bool operator==(const parse_error &left, const parse_error &right) noexcept
+    {
+        return (left.error_message == right.error_message) && (left.where == right.where);
+    }
+
+    std::ostream &operator<<(std::ostream &out, const parse_error &value)
+    {
+        return out << value.where << ": " << value.error_message;
+    }
+
+    std::tuple<std::optional<identifier>, source_location> parser::expect_identifier()
     {
         std::optional<token> token = tokens.pop();
 
         if (!token)
         {
-            on_error(parse_error{"Expected identifier but got end of stream"});
-            return std::nullopt;
+            on_error(parse_error{"Expected identifier but got end of stream", tokens.next_location});
+            return std::make_tuple(std::nullopt, tokens.next_location);
         }
 
-        return std::visit(
-            overloaded{
-                [](identifier &&identifier_) -> std::optional<identifier> { return std::move(identifier_); },
-                [](auto &&) -> std::optional<identifier> { return std::nullopt; },
-            },
-            std::move(*token));
+        return std::make_tuple(
+            std::visit(overloaded{
+                           [](identifier &&identifier_) -> std::optional<identifier> { return std::move(identifier_); },
+                           [this, &token](auto &&) -> std::optional<identifier> {
+                               on_error(parse_error({"Expected identifier", token->location}));
+                               return std::nullopt;
+                           },
+                       },
+                       std::move(token->content)),
+            token->location);
     }
 
     std::optional<declaration> parser::parse_declaration()
     {
-        std::optional<identifier> name = expect_identifier();
+        auto [name, location] = expect_identifier();
         if (!name)
         {
-            on_error(parse_error({"Expected variable name but found end of file"}));
             return std::nullopt;
         }
 
-        const bool is_assigment = expect_special_character(special_character::assign);
-        if (!is_assigment)
+        const bool is_assignment = expect_special_character(special_character::assign);
+        if (!is_assignment)
         {
             return std::nullopt;
         }
@@ -178,7 +205,8 @@ namespace lpg
         std::optional<expression> initializer = parse_expression();
         if (!initializer)
         {
-            on_error(parse_error{"Invalid initializer value for identifier: " + std::string(name.value().content)});
+            on_error(parse_error{
+                "Invalid initializer value for identifier: " + std::string(name.value().content), location});
             return std::nullopt;
         }
         return declaration{name.value(), std::make_unique<expression>(std::move(initializer.value()))};
@@ -189,21 +217,21 @@ namespace lpg
         const std::optional<token> token = tokens.pop();
         if (!token)
         {
-            on_error(parse_error{"Expected special character but got end of stream"});
+            on_error(parse_error{"Expected special character but got end of stream", tokens.next_location});
             return false;
         }
-        if (std::holds_alternative<special_character>(token.value()))
+        if (std::holds_alternative<special_character>(token->content))
         {
-            if (expected != std::get<special_character>(token.value()))
+            if (expected != std::get<special_character>(token->content))
             {
-                on_error(parse_error{"Expected a different special character"});
+                on_error(parse_error{"Expected a different special character", token->location});
             }
             else
             {
                 return true;
             }
         }
-        on_error(parse_error{"Expected something else"});
+        on_error(parse_error{"Expected something else", token->location});
         return false;
     }
 
@@ -212,47 +240,48 @@ namespace lpg
         std::optional<non_comment> const next_token = pop_next_non_comment(tokens);
         if (!next_token)
         {
-            on_error(parse_error{"Unexpected end of stream"});
+            on_error(parse_error{"Unexpected end of stream", tokens.next_location});
             return std::nullopt;
         }
 
         std::optional<expression> left_side = std::visit(
-            overloaded{[this](identifier const &callee) -> std::optional<expression> {
-                           if (callee.content == "let")
-                           {
-                               std::optional<declaration> declaration = parse_declaration();
-                               if (!declaration)
-                               {
-                                   return std::nullopt;
-                               }
-                               return expression{std::move(declaration.value())};
-                           }
-                           return expression{callee};
-                       },
-                       [this](special_character character) -> std::optional<expression> {
-                           switch (character)
-                           {
-                           case special_character::left_parenthesis:
-                               return parse_parentheses();
-                           case special_character::right_parenthesis:
-                               on_error(parse_error({"Can not have a closing parenthesis here."}));
-                               return std::nullopt;
-                           case special_character::left_brace:
-                               return parse_braces();
-                           case special_character::right_brace:
-                               on_error(parse_error({"Can not have a closing parenthesis here."}));
-                               return std::nullopt;
-                           case special_character::slash:
-                               on_error(parse_error({"Can not have a slash here."}));
-                               return std::nullopt;
-                           case special_character::assign:
-                               on_error(parse_error({"Can not have an assignment operator here."}));
-                               return std::nullopt;
-                           }
-                           LPG_UNREACHABLE();
-                       },
-                       [](string_literal const &literal) -> std::optional<expression> { return expression{literal}; }},
-            *next_token);
+            overloaded{
+                [this](identifier const &callee) -> std::optional<expression> {
+                    if (callee.content == "let")
+                    {
+                        std::optional<declaration> declaration = parse_declaration();
+                        if (!declaration)
+                        {
+                            return std::nullopt;
+                        }
+                        return expression{std::move(declaration.value())};
+                    }
+                    return expression{callee};
+                },
+                [this, &next_token](special_character character) -> std::optional<expression> {
+                    switch (character)
+                    {
+                    case special_character::left_parenthesis:
+                        return parse_parentheses();
+                    case special_character::right_parenthesis:
+                        on_error(parse_error({"Can not have a closing parenthesis here.", next_token->location}));
+                        return std::nullopt;
+                    case special_character::left_brace:
+                        return parse_braces();
+                    case special_character::right_brace:
+                        on_error(parse_error({"Can not have a closing parenthesis here.", next_token->location}));
+                        return std::nullopt;
+                    case special_character::slash:
+                        on_error(parse_error({"Can not have a slash here.", next_token->location}));
+                        return std::nullopt;
+                    case special_character::assign:
+                        on_error(parse_error({"Can not have an assignment operator here.", next_token->location}));
+                        return std::nullopt;
+                    }
+                    LPG_UNREACHABLE();
+                },
+                [](string_literal const &literal) -> std::optional<expression> { return expression{literal}; }},
+            next_token->content);
 
         std::optional<non_comment> right_side = peek_next_non_comment(tokens);
         if (!right_side)
@@ -263,7 +292,7 @@ namespace lpg
         return std::visit(
             overloaded{
                 [&left_side](identifier const &) -> std::optional<expression> { return std::move(left_side); },
-                [&left_side, this](special_character character) -> std::optional<expression> {
+                [this, &left_side, &right_side](special_character character) -> std::optional<expression> {
                     switch (character)
                     {
                     case special_character::left_parenthesis:
@@ -275,16 +304,16 @@ namespace lpg
                     case special_character::right_brace:
                         return std::move(left_side);
                     case special_character::slash:
-                        on_error(parse_error{"Can not have a slash here."});
+                        on_error(parse_error{"Can not have a slash here.", right_side->location});
                         return std::nullopt;
                     case special_character::assign:
-                        on_error(parse_error{"Can not have an assignment operator here."});
+                        on_error(parse_error{"Can not have an assignment operator here.", right_side->location});
                         return std::nullopt;
                     }
                     LPG_UNREACHABLE();
                 },
                 [&left_side](string_literal const &) -> std::optional<expression> { return std::move(left_side); }},
-            *right_side);
+            right_side->content);
     }
 
     sequence parser::parse_sequence(const bool is_in_braces)
@@ -297,13 +326,13 @@ namespace lpg
             {
                 if (is_in_braces)
                 {
-                    on_error(parse_error{"Missing closing brace '}' before end of file"});
+                    on_error(parse_error{"Missing closing brace '}' before end of file", tokens.next_location});
                 }
                 break;
             }
             if (is_in_braces)
             {
-                special_character const *const token = std::get_if<special_character>(&*maybe_token);
+                special_character const *const token = std::get_if<special_character>(&maybe_token->content);
                 if (token && (*token == special_character::right_brace))
                 {
                     (void)tokens.pop();
@@ -325,7 +354,6 @@ namespace lpg
         std::optional<expression> result = parse_expression();
         if (!result)
         {
-            on_error(parse_error{"Can not parse expression inside parenthese."});
             return std::nullopt;
         }
         expect_special_character(special_character::right_parenthesis);
@@ -340,11 +368,11 @@ namespace lpg
     std::optional<expression> parser::parse_call(expression callee)
     {
         // popping off the left parenthesis
-        (void)tokens.pop();
+        token const parenthesis = tokens.pop().value();
         std::optional<expression> argument = parse_expression();
         if (!argument)
         {
-            on_error(parse_error{"Could not parse argument of the function"});
+            on_error(parse_error{"Could not parse argument of the function", parenthesis.location});
             return std::nullopt;
         }
         expect_special_character(special_character::right_parenthesis);
@@ -358,7 +386,7 @@ namespace lpg
         sequence parsed = parser.parse_sequence(false);
         if (parser.tokens.has_failed)
         {
-            on_error(lpg::parse_error{"Tokenization failed"});
+            on_error(lpg::parse_error{"Tokenization failed", parser.tokens.next_location});
         }
         return parsed;
     }

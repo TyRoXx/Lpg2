@@ -9,9 +9,22 @@
 
 namespace lpg
 {
+    struct source_location
+    {
+        size_t line = 0;
+        size_t column = 0;
+
+        source_location() noexcept = default;
+        source_location(size_t line, size_t column) noexcept;
+        std::weak_ordering operator<=>(source_location const &other) const noexcept = default;
+    };
+
+    std::ostream &operator<<(std::ostream &out, const source_location &value);
+
     struct identifier
     {
         std::string_view content;
+
         std::weak_ordering operator<=>(identifier const &other) const noexcept = default;
     };
 
@@ -40,11 +53,23 @@ namespace lpg
     struct comment
     {
         std::string_view inner_content;
+
+        std::weak_ordering operator<=>(comment const &other) const noexcept = default;
     };
 
     std::ostream &operator<<(std::ostream &out, const comment &value);
 
-    using token = std::variant<identifier, special_character, string_literal, comment>;
+    using token_content = std::variant<identifier, special_character, string_literal, comment>;
+
+    struct token
+    {
+        token_content content;
+        source_location location;
+
+        std::weak_ordering operator<=>(token const &other) const noexcept = default;
+    };
+
+    std::ostream &operator<<(std::ostream &out, const token &value);
 
     inline bool is_identifier_letter(char c)
     {
@@ -60,6 +85,7 @@ namespace lpg
     {
         std::string_view::iterator next;
         std::string_view::iterator end;
+        source_location next_location;
 
         std::optional<token> peeked;
         bool has_failed = false;
