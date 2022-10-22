@@ -66,6 +66,7 @@ namespace lpg
         token_content content;
         source_location location;
 
+        token(token_content content, source_location location) noexcept;
         std::weak_ordering operator<=>(token const &other) const noexcept = default;
     };
 

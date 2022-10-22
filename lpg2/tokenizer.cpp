@@ -32,6 +32,12 @@ std::ostream &lpg::operator<<(std::ostream &out, const comment &value)
     return out << "/*" << value.inner_content << "*/";
 }
 
+lpg::token::token(token_content content, source_location location) noexcept
+    : content(std::move(content))
+    , location(location)
+{
+}
+
 std::ostream &lpg::operator<<(std::ostream &out, const token &value)
 {
     return out << value.content << "(" << value.location << ")";
@@ -76,41 +82,42 @@ std::optional<lpg::token> lpg::scanner::peek()
 
     if (head == '(')
     {
+        peeked = token{special_character::left_parenthesis, next_location};
         ++next;
         ++next_location.column;
-        peeked = token{special_character::left_parenthesis};
         return peeked;
     }
     if (head == ')')
     {
+        peeked = token{special_character::right_parenthesis, next_location};
         ++next;
         ++next_location.column;
-        peeked = token{special_character::right_parenthesis};
         return peeked;
     }
     if (head == '{')
     {
+        peeked = token{special_character::left_brace, next_location};
         ++next;
         ++next_location.column;
-        peeked = token{special_character::left_brace};
         return peeked;
     }
     if (head == '}')
     {
+        peeked = token{special_character::right_brace, next_location};
         ++next;
         ++next_location.column;
-        peeked = token{special_character::right_brace};
         return peeked;
     }
     if (head == '=')
     {
+        peeked = token{special_character::assign, next_location};
         ++next;
         ++next_location.column;
-        peeked = token{special_character::assign};
         return peeked;
     }
     if (head == '/')
     {
+        source_location const token_location = next_location;
         ++next;
         ++next_location.column;
 
@@ -118,7 +125,7 @@ std::optional<lpg::token> lpg::scanner::peek()
         {
             ++next;
             ++next_location.column;
-            auto const literal_begin = next;
+            auto const comment_begin = next;
             for (;;)
             {
                 if (next == end)
@@ -133,18 +140,19 @@ std::optional<lpg::token> lpg::scanner::peek()
                 ++next;
                 ++next_location.column;
             }
-            auto const literal_end = next;
-            peeked = token{comment{std::string_view(&*literal_begin, literal_end - literal_begin)}};
+            auto const comment_end = next;
+            peeked = token{comment{std::string_view(&*comment_begin, comment_end - comment_begin)}, token_location};
             return peeked;
         }
 
-        peeked = token{special_character::slash};
+        peeked = token{special_character::slash, token_location};
         return peeked;
     }
     if (head == '"')
     {
         // only update next if the string literal is valid, so that you can see where the invalid literal began
         auto i = next;
+        source_location const string_location = next_location;
         ++i;
         std::string_view::iterator literal_begin = i;
         for (;;)
@@ -165,12 +173,13 @@ std::optional<lpg::token> lpg::scanner::peek()
         ++i;
         next = i;
         next_location.column += (next - literal_begin);
-        peeked = token{string_literal{std::string_view(&*literal_begin, literal_end - literal_begin)}};
+        peeked = token{string_literal{std::string_view(&*literal_begin, literal_end - literal_begin)}, string_location};
         return peeked;
     }
     if (is_identifier_letter(head))
     {
         std::string_view::iterator identifier_begin = next;
+        source_location const identifier_location = next_location;
         ++next;
         ++next_location.column;
         while ((next != end) && is_identifier_letter(*next))
@@ -178,7 +187,7 @@ std::optional<lpg::token> lpg::scanner::peek()
             ++next;
             ++next_location.column;
         }
-        peeked = token{identifier{std::string_view(&*identifier_begin, next - identifier_begin)}};
+        peeked = token{identifier{std::string_view(&*identifier_begin, next - identifier_begin)}, identifier_location};
         return peeked;
     }
     peeked = std::nullopt;

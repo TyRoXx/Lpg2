@@ -54,7 +54,7 @@ TEST_CASE("scan_parentheses")
     CHECK(character == lpg::special_character::left_parenthesis);
 
     lpg::token const second_paren = s.pop().value();
-    CHECK(lpg::source_location(0, 0) == second_paren.location);
+    CHECK(lpg::source_location(0, 1) == second_paren.location);
 
     CHECK(!s.peek());
     lpg::special_character const character1 = std::get<lpg::special_character>(second_paren.content);
@@ -120,7 +120,7 @@ TEST_CASE("scan_comment")
 {
     auto s = lpg::scanner("//Just a comment\ntest");
     lpg::non_comment const t = lpg::peek_next_non_comment(s).value();
-    CHECK(lpg::source_location(0, 0) == t.location);
+    CHECK(lpg::source_location(0, 16) == t.location);
     CHECK(s.peek());
 
     lpg::identifier id = std::get<lpg::identifier>(t.content);
@@ -165,7 +165,7 @@ TEST_CASE("ignore_spaces")
 
     lpg::non_comment const id_token = lpg::pop_next_non_comment(s).value();
     CHECK(!s.peek());
-    CHECK(id_token == lpg::non_comment{lpg::identifier{"a"}, lpg::source_location{0, 0}});
+    CHECK(id_token == lpg::non_comment{lpg::identifier{"a"}, lpg::source_location{0, 3}});
     CHECK(!s.has_failed);
 }
 
