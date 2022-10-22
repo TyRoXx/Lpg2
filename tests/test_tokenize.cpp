@@ -43,6 +43,16 @@ TEST_CASE("scan_invalid_string")
     CHECK(s.has_failed);
 }
 
+TEST_CASE("scan_new_line")
+{
+    auto s = lpg::scanner("\n\"Hello\"");
+    lpg::token const t = s.pop().value();
+    CHECK(lpg::source_location(1, 0) == t.location);
+    lpg::string_literal const string = std::get<lpg::string_literal>(t.content);
+    CHECK(string.inner_content == "Hello");
+    CHECK(!s.has_failed);
+}
+
 TEST_CASE("scan_parentheses")
 {
     auto s = lpg::scanner("()");
