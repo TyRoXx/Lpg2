@@ -55,14 +55,14 @@ TEST_CASE("parentheses")
 
 TEST_CASE("variable_declaration")
 {
-    CHECK(lpg::run_result{"Declaring a\n"} == lpg::run(R"(let a = "Hello world")", fail_on_error));
+    CHECK(lpg::run_result{""} == lpg::run(R"(let a = "Hello world")", fail_on_error));
 }
 
 TEST_CASE("variable_access")
 {
-    CHECK(lpg::run_result{"Declaring a\nHello world"} == lpg::run(R"(let a = "Hello world"
+    CHECK(lpg::run_result{"Hello world"} == lpg::run(R"(let a = "Hello world"
 print(a))",
-                                                                  fail_on_error));
+                                                     fail_on_error));
 }
 
 TEST_CASE("block_empty")
@@ -96,13 +96,13 @@ TEST_CASE("block_nested_complex")
 
 TEST_CASE("block_returns_value")
 {
-    CHECK(lpg::run_result{"Declaring b\nab"} == lpg::run(R"(
+    CHECK(lpg::run_result{"ab"} == lpg::run(R"(
 let b = {
     print("a")
     "b"
 }
 print(b))",
-                                                         fail_on_error));
+                                            fail_on_error));
 }
 
 TEST_CASE("variable_redeclaration")
@@ -115,8 +115,8 @@ let a = "Hello world")",
 
 TEST_CASE("trailing_new_line")
 {
-    CHECK(lpg::run_result{"Declaring a\nHello world"} == lpg::run(R"(let a = "Hello world"
+    CHECK(lpg::run_result{"Hello world"} == lpg::run(R"(let a = "Hello world"
 print(a)
 )",
-                                                                  fail_on_error));
+                                                     fail_on_error));
 }

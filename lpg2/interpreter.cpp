@@ -97,9 +97,6 @@ namespace lpg
                         return evaluate_sequence(list, locals, output);
                     },
                     [&output, &locals](declaration const &declaration_) -> evaluate_result {
-                        output += "Declaring ";
-                        output += declaration_.name.content;
-                        output += "\n";
                         BOOST_OUTCOME_TRY(value initial_value, evaluate(*declaration_.initializer, locals, output));
                         bool const inserted =
                             locals.insert(std::make_pair(declaration_.name.content, std::move(initial_value))).second;
