@@ -42,6 +42,12 @@ TEST_CASE("unknown_function")
           lpg::run(R"aaa(hello("ABC"))aaa", fail_on_error));
 }
 
+TEST_CASE("unknown_argument")
+{
+    CHECK(lpg::run_result{lpg::evaluate_error{lpg::evaluate_error_type::unknown_identifier, "uuu"}} ==
+          lpg::run(R"aaa(print(uuu))aaa", fail_on_error));
+}
+
 TEST_CASE("argument_type_mismatch")
 {
     CHECK(lpg::run_result{lpg::evaluate_error{lpg::evaluate_error_type::not_callable}} ==
