@@ -32,7 +32,11 @@ namespace lpg
         print
     };
 
-    using value = std::variant<std::string, builtin_functions, std::nullptr_t>;
+    struct void_
+    {
+    };
+
+    using value = std::variant<std::string, builtin_functions, void_>;
     using local_variable_map = std::map<std::string, value>;
 
     [[nodiscard]] run_result run(std::string_view source, std::function<void(parse_error)> on_error);

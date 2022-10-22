@@ -42,7 +42,7 @@ namespace lpg
                             output += argument;
                             break;
                         }
-                        return nullptr;
+                        return void_{};
                     },
                     [](auto const &, auto const &) -> evaluate_result {
                         return evaluate_error{evaluate_error_type::not_callable};
@@ -68,7 +68,7 @@ namespace lpg
             {
                 return std::move(*sequence_result);
             }
-            return value(nullptr);
+            return value(void_{});
         }
 
         evaluate_result evaluate(expression const &to_evaluate, local_variable_map &locals, std::string &output)
@@ -105,7 +105,7 @@ namespace lpg
                             return evaluate_error{
                                 evaluate_error_type::redeclaration, std::string(declaration_.name.content)};
                         }
-                        return value(nullptr);
+                        return value(void_{});
                     }},
                 to_evaluate.value);
         }

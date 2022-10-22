@@ -111,6 +111,14 @@ print(b))",
                                             fail_on_error));
 }
 
+TEST_CASE("void_variable")
+{
+    CHECK(lpg::run_result{""} == lpg::run(R"(
+let v = {}
+)",
+                                          fail_on_error));
+}
+
 TEST_CASE("variable_redeclaration")
 {
     CHECK(lpg::run_result{lpg::evaluate_error{lpg::evaluate_error_type::redeclaration, "a"}} ==
