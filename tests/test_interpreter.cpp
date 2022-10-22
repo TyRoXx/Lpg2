@@ -94,6 +94,17 @@ TEST_CASE("block_nested_complex")
                                              fail_on_error));
 }
 
+TEST_CASE("block_returns_value")
+{
+    CHECK(lpg::run_result{"Declaring b\nab"} == lpg::run(R"(
+let b = {
+    print("a")
+    "b"
+}
+print(b))",
+                                                         fail_on_error));
+}
+
 TEST_CASE("variable_redeclaration")
 {
     CHECK(lpg::run_result{lpg::evaluate_error{lpg::evaluate_error_type::redeclaration, "a"}} ==

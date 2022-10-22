@@ -51,18 +51,24 @@ namespace lpg
                 callee, argument);
         }
 
-        [[nodiscard]] std::optional<evaluate_error> evaluate_sequence(sequence const &to_evaluate,
-                                                                      local_variable_map &locals, std::string &output)
+        [[nodiscard]] evaluate_result evaluate_sequence(sequence const &to_evaluate, local_variable_map &locals,
+                                                        std::string &output)
         {
+            std::optional<value> sequence_result;
             for (expression const &element : to_evaluate.elements)
             {
-                evaluate_result const result = evaluate(element, locals, output);
+                evaluate_result result = evaluate(element, locals, output);
                 if (result.has_error())
                 {
                     return result.assume_error();
                 }
+                sequence_result = std::move(result.assume_value());
             }
-            return std::nullopt;
+            if (sequence_result)
+            {
+                return std::move(*sequence_result);
+            }
+            return value(nullptr);
         }
 
         evaluate_result evaluate(expression const &to_evaluate, local_variable_map &locals, std::string &output)
@@ -88,12 +94,7 @@ namespace lpg
                         return evaluate_call(function, locals, output);
                     },
                     [&output, &locals](sequence const &list) -> evaluate_result {
-                        std::optional<evaluate_error> const error = evaluate_sequence(list, locals, output);
-                        if (error)
-                        {
-                            return *error;
-                        }
-                        return value(nullptr);
+                        return evaluate_sequence(list, locals, output);
                     },
                     [&output, &locals](declaration const &declaration_) -> evaluate_result {
                         output += "Declaring ";
@@ -120,10 +121,10 @@ lpg::run_result lpg::run(std::string_view source, std::function<void(parse_error
     sequence program = compile(source, move(on_error));
     local_variable_map locals;
     std::string output;
-    std::optional<evaluate_error> const error = evaluate_sequence(program, locals, output);
-    if (error)
+    evaluate_result const result = evaluate_sequence(program, locals, output);
+    if (result.has_error())
     {
-        return *error;
+        return result.assume_error();
     }
     return std::move(output);
 }
