@@ -1,4 +1,3 @@
-#define CATCH_CONFIG_MAIN
 #include "lpg2/interpreter.h"
 #include <catch2/catch_test_macros.hpp>
 
@@ -41,31 +40,6 @@ TEST_CASE("print_twice")
 {
     CHECK(lpg::run_result{"ab"} ==
           lpg::run(R"aaa(print("a")print("b"))aaa", fail_on_parse_error, fail_on_semantic_error));
-}
-
-namespace
-{
-    void expect_semantic_errors(std::string_view const &source,
-                                std::vector<lpg::semantics::semantic_error> const &expected_errors)
-    {
-        lpg::syntax::sequence const parsed = compile(source, fail_on_parse_error);
-        std::vector<lpg::semantics::semantic_error> got_errors;
-        lpg::semantics::sequence const checked = lpg::semantics::check_types(
-            parsed, [&got_errors](lpg::semantics::semantic_error error) { got_errors.emplace_back(std::move(error)); });
-        CHECK(expected_errors == got_errors);
-    }
-} // namespace
-
-TEST_CASE("unknown_function")
-{
-    expect_semantic_errors(R"aaa(hello("ABC"))aaa",
-                           {lpg::semantics::semantic_error{"Unknown identifier", lpg::syntax::source_location{0, 0}}});
-}
-
-TEST_CASE("unknown_argument")
-{
-    expect_semantic_errors(R"aaa(print(uuu))aaa",
-                           {lpg::semantics::semantic_error{"Unknown identifier", lpg::syntax::source_location{0, 6}}});
 }
 
 TEST_CASE("argument_type_mismatch")
@@ -139,14 +113,6 @@ TEST_CASE("void_variable")
 let v = {}
 )",
                                           fail_on_parse_error, fail_on_semantic_error));
-}
-
-TEST_CASE("variable_redeclaration")
-{
-    expect_semantic_errors(R"(let a = "Hello world"
-let a = "Hello world")",
-                           {lpg::semantics::semantic_error{
-                               "Local variable with this name already exists", lpg::syntax::source_location{1, 4}}});
 }
 
 TEST_CASE("trailing_new_line")
