@@ -55,7 +55,11 @@ namespace lpg::semantics
     {
         std::string message;
         syntax::source_location location;
+
+        std::weak_ordering operator<=>(semantic_error const &other) const noexcept = default;
     };
+
+    std::ostream &operator<<(std::ostream &out, semantic_error const &error);
 
     using semantic_error_handler = std::function<void(semantic_error)>;
 

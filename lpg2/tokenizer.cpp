@@ -74,8 +74,12 @@ namespace lpg::syntax
                 ++next_location.line;
                 next_location.column = 0;
             }
-
+            else
+            {
+                ++next_location.column;
+            }
             next++;
+
             if (next == end)
             {
                 return std::nullopt;

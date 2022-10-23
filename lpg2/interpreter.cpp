@@ -1,127 +1,150 @@
 #include "interpreter.h"
 #include "overloaded.h"
-#include "parser.h"
-#include "tokenizer.h"
-#include <boost/outcome/basic_result.hpp>
-#include <boost/outcome/policy/fail_to_compile_observers.hpp>
-#include <boost/outcome/try.hpp>
-#include <variant>
+#include "type_checker.h"
+#include <boost/outcome/result.hpp>
 
 namespace lpg
 {
     bool operator==(evaluate_error const &left, evaluate_error const &right)
     {
-        return (left.type == right.type) && (left.identifier == right.identifier);
+        return (left.type == right.type);
     }
 
     std::ostream &operator<<(std::ostream &out, evaluate_error const &error)
     {
-        return out << static_cast<int>(error.type) << " " << error.identifier;
+        return out << static_cast<int>(error.type);
     }
 
     namespace
     {
-        using evaluate_result = boost::outcome_v2::basic_result<value, evaluate_error,
-                                                                boost::outcome_v2::policy::fail_to_compile_observers>;
-
-        [[nodiscard]] evaluate_result evaluate(syntax::expression const &to_evaluate, local_variable_map &locals,
-                                               std::string &output);
-
-        [[nodiscard]] evaluate_result evaluate_call(syntax::call const &function, local_variable_map &locals,
-                                                    std::string &output)
+        struct void_
         {
-            BOOST_OUTCOME_TRY(value const callee, evaluate(*function.callee, locals, output));
-            BOOST_OUTCOME_TRY(value const argument, evaluate(*function.argument, locals, output));
+        };
 
-            return std::visit(overloaded{
-                                  [&output](semantics::builtin_functions const callee,
-                                            std::string const &argument) -> evaluate_result {
-                                      switch (callee)
-                                      {
-                                      case semantics::builtin_functions::print:
-                                          output += argument;
-                                          break;
-                                      }
-                                      return void_{};
-                                  },
-                                  [](auto const &, auto const &) -> evaluate_result {
-                                      return evaluate_error{evaluate_error_type::not_callable};
-                                  },
-                              },
-                              callee, argument);
-        }
+        using value = std::variant<std::string, semantics::builtin_functions, void_>;
 
-        [[nodiscard]] evaluate_result evaluate_sequence(syntax::sequence const &to_evaluate, local_variable_map &locals,
-                                                        std::string &output)
+        struct interpreter final
         {
-            std::optional<value> sequence_result;
-            for (syntax::expression const &element : to_evaluate.elements)
+            std::vector<std::optional<value>> locals;
+            std::string print_output;
+
+            [[nodiscard]] std::optional<evaluate_error> initialize_local(semantics::local_id const id,
+                                                                         value initializer)
             {
-                evaluate_result result = evaluate(element, locals, output);
-                if (result.has_error())
+                if (id.value >= locals.size())
                 {
-                    return result.assume_error();
+                    locals.resize(id.value + 1);
                 }
-                sequence_result = std::move(result.assume_value());
+                std::optional<value> &local = locals[id.value];
+                if (local)
+                {
+                    return evaluate_error{evaluate_error_type::local_initialized_twice};
+                }
+                local = std::move(initializer);
+                return std::nullopt;
             }
-            if (sequence_result)
-            {
-                return std::move(*sequence_result);
-            }
-            return value(void_{});
-        }
 
-        evaluate_result evaluate(syntax::expression const &to_evaluate, local_variable_map &locals, std::string &output)
+            [[nodiscard]] boost::outcome_v2::result<value, evaluate_error> read_local(semantics::local_id const id)
+            {
+                std::optional<value> const &local = locals[id.value];
+                if (!local)
+                {
+                    return evaluate_error{evaluate_error_type::read_uninitialized_local};
+                }
+                return *local;
+            }
+        };
+
+        [[nodiscard]] std::optional<evaluate_error> run_sequence(interpreter &context,
+                                                                 semantics::sequence const &sequence);
+
+        [[nodiscard]] std::optional<evaluate_error> run_instruction(interpreter &context,
+                                                                    semantics::instruction const &instruction)
         {
             return std::visit(
                 overloaded{
-                    [](syntax::string_literal constant) -> evaluate_result {
-                        return value{std::string{constant.inner_content}};
+                    [&context](semantics::builtin const &builtin_instruction) -> std::optional<evaluate_error> {
+                        return context.initialize_local(builtin_instruction.destination, builtin_instruction.function);
                     },
-                    [&locals](syntax::identifier name) -> evaluate_result {
-                        if (name.content == "print")
+                    [&context](semantics::call const &call_instruction) -> std::optional<evaluate_error> {
+                        boost::outcome_v2::result<value, evaluate_error> const maybe_callee =
+                            context.read_local(call_instruction.callee);
+                        if (maybe_callee.has_error())
                         {
-                            return semantics::builtin_functions::print;
+                            return maybe_callee.assume_error();
                         }
-                        auto const found = locals.find(std::string(name.content));
-                        if (found == locals.end())
+                        boost::outcome_v2::result<value, evaluate_error> const maybe_argument =
+                            context.read_local(call_instruction.argument);
+                        if (maybe_argument.has_error())
                         {
-                            return evaluate_error{evaluate_error_type::unknown_identifier, std::string(name.content)};
+                            return maybe_argument.assume_error();
                         }
-                        return found->second;
-                    },
-                    [&output, &locals](syntax::call const &function) -> evaluate_result {
-                        return evaluate_call(function, locals, output);
-                    },
-                    [&output, &locals](syntax::sequence const &list) -> evaluate_result {
-                        return evaluate_sequence(list, locals, output);
-                    },
-                    [&output, &locals](syntax::declaration const &declaration_) -> evaluate_result {
-                        BOOST_OUTCOME_TRY(value initial_value, evaluate(*declaration_.initializer, locals, output));
-                        bool const inserted =
-                            locals.insert(std::make_pair(declaration_.name.content, std::move(initial_value))).second;
-                        if (!inserted)
+                        semantics::builtin_functions const *const builtin =
+                            std::get_if<semantics::builtin_functions>(&maybe_callee.assume_value());
+                        if (!builtin)
                         {
-                            return evaluate_error{
-                                evaluate_error_type::redeclaration, std::string(declaration_.name.content)};
+                            return evaluate_error{evaluate_error_type::not_callable};
                         }
-                        return value(void_{});
+                        switch (*builtin)
+                        {
+                        case semantics::builtin_functions::print: {
+                            std::string const *const message = std::get_if<std::string>(&maybe_argument.assume_value());
+                            if (!message)
+                            {
+                                return evaluate_error{evaluate_error_type::invalid_argument_type};
+                            }
+                            context.print_output += *message;
+                            break;
+                        }
+                        }
+                        return std::nullopt;
+                    },
+                    [&context](
+                        semantics::string_literal const &string_literal_instruction) -> std::optional<evaluate_error> {
+                        return context.initialize_local(
+                            string_literal_instruction.destination, string_literal_instruction.value);
+                    },
+                    [&context](semantics::sequence const &sequence_instruction) -> std::optional<evaluate_error> {
+                        return run_sequence(context, sequence_instruction);
+                    },
+                    [&context](
+                        semantics::void_literal const &void_literal_instruction) -> std::optional<evaluate_error> {
+                        return context.initialize_local(void_literal_instruction.destination, void_{});
+                    },
+                    [](semantics::poison const &poison_instruction) -> std::optional<evaluate_error> {
+                        (void)poison_instruction;
+                        return evaluate_error{evaluate_error_type::poison_reached};
                     }},
-                to_evaluate.value);
+                instruction);
+        }
+
+        [[nodiscard]] std::optional<evaluate_error> run_sequence(interpreter &context,
+                                                                 semantics::sequence const &sequence)
+        {
+            for (semantics::instruction const &element : sequence.elements)
+            {
+                std::optional<evaluate_error> error = run_instruction(context, element);
+                if (error)
+                {
+                    return error;
+                }
+            }
+            return std::nullopt;
         }
     } // namespace
 
-    run_result run(std::string_view source, std::function<void(syntax::parse_error)> on_error)
+    run_result run(std::string_view source, std::function<void(syntax::parse_error)> on_syntax_error,
+                   semantics::semantic_error_handler on_semantic_error)
     {
-        assert(on_error);
-        syntax::sequence program = compile(source, move(on_error));
-        local_variable_map locals;
-        std::string output;
-        evaluate_result const result = evaluate_sequence(program, locals, output);
-        if (result.has_error())
+        assert(on_syntax_error);
+        assert(on_semantic_error);
+        syntax::sequence parsed = compile(source, move(on_syntax_error));
+        semantics::sequence const checked = semantics::check_types(parsed, move(on_semantic_error));
+        interpreter context;
+        if (std::optional<evaluate_error> error = run_sequence(context, checked))
         {
-            return result.assume_error();
+            return std::move(*error);
         }
-        return std::move(output);
+        return std::move(context.print_output);
     }
 } // namespace lpg

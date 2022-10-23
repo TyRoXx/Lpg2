@@ -176,7 +176,7 @@ TEST_CASE("ignore_spaces")
 
     lpg::syntax::non_comment const id_token = pop_next_non_comment(s).value();
     CHECK(!s.peek());
-    CHECK(id_token == lpg::syntax::non_comment{lpg::syntax::identifier_token{"a"}, lpg::syntax::source_location{0, 3}});
+    CHECK(id_token == lpg::syntax::non_comment{lpg::syntax::identifier_token{"a"}, lpg::syntax::source_location{0, 4}});
     CHECK(!s.has_failed);
 }
 

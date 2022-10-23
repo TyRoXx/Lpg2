@@ -4,6 +4,11 @@
 
 namespace lpg::semantics
 {
+    std::ostream &operator<<(std::ostream &out, semantic_error const &error)
+    {
+        return out << error.location << ":" << error.message;
+    }
+
     namespace
     {
         struct type_checker

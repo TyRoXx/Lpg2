@@ -31,7 +31,7 @@ TEST_CASE("block_missing_closing_brace")
 TEST_CASE("invalid_string_position")
 {
     expect_compilation_error(R"(let a "Hello world")",
-                             {lpg::syntax::parse_error{"Expected something else", lpg::syntax::source_location{0, 4}}},
+                             {lpg::syntax::parse_error{"Expected something else", lpg::syntax::source_location{0, 6}}},
                              lpg::syntax::sequence{});
 }
 
@@ -45,9 +45,8 @@ TEST_CASE("only_let")
 
 TEST_CASE("let_followed_by_non_identifier")
 {
-
     expect_compilation_error(
-        "let =", {lpg::syntax::parse_error{"Expected identifier", lpg::syntax::source_location{0, 3}}},
+        "let =", {lpg::syntax::parse_error{"Expected identifier", lpg::syntax::source_location{0, 4}}},
         lpg::syntax::sequence{});
 }
 
@@ -55,7 +54,7 @@ TEST_CASE("declaration_missing_assignment")
 {
     expect_compilation_error("let a",
                              {lpg::syntax::parse_error{"Expected special character but got end of stream",
-                                                       lpg::syntax::source_location{0, 4}}},
+                                                       lpg::syntax::source_location{0, 5}}},
                              lpg::syntax::sequence{});
 }
 
@@ -63,8 +62,8 @@ TEST_CASE("declaration_with_incorrect_operator")
 {
     expect_compilation_error(
         "let a )",
-        {lpg::syntax::parse_error{"Expected a different special character", lpg::syntax::source_location{0, 4}},
-         lpg::syntax::parse_error{"Expected something else", lpg::syntax::source_location{0, 4}}},
+        {lpg::syntax::parse_error{"Expected a different special character", lpg::syntax::source_location{0, 6}},
+         lpg::syntax::parse_error{"Expected something else", lpg::syntax::source_location{0, 6}}},
         lpg::syntax::sequence{});
 }
 
@@ -101,14 +100,14 @@ TEST_CASE("identifier_followed_by_special_character")
 {
     expect_compilation_error(
         "a =",
-        {lpg::syntax::parse_error{"Can not have an assignment operator here.", lpg::syntax::source_location{0, 1}}},
+        {lpg::syntax::parse_error{"Can not have an assignment operator here.", lpg::syntax::source_location{0, 2}}},
         lpg::syntax::sequence{});
 }
 
 TEST_CASE("identifier_followed_by_slash")
 {
     expect_compilation_error(
-        "a /", {lpg::syntax::parse_error{"Can not have a slash here.", lpg::syntax::source_location{0, 1}}},
+        "a /", {lpg::syntax::parse_error{"Can not have a slash here.", lpg::syntax::source_location{0, 2}}},
         lpg::syntax::sequence{});
 }
 
@@ -116,8 +115,8 @@ TEST_CASE("invalid_content_inside_parentheses")
 {
     expect_compilation_error(
         "(a /)",
-        {lpg::syntax::parse_error{"Can not have a slash here.", lpg::syntax::source_location{0, 2}},
-         lpg::syntax::parse_error{"Can not have a slash here.", lpg::syntax::source_location{0, 2}}},
+        {lpg::syntax::parse_error{"Can not have a slash here.", lpg::syntax::source_location{0, 3}},
+         lpg::syntax::parse_error{"Can not have a slash here.", lpg::syntax::source_location{0, 3}}},
         lpg::syntax::sequence{});
 }
 
@@ -134,8 +133,8 @@ TEST_CASE("missing_initializer_for_declaration")
 {
     expect_compilation_error(
         R"(let a = )",
-        {lpg::syntax::parse_error{"Unexpected end of stream", lpg::syntax::source_location{0, 5}},
-         lpg::syntax::parse_error{"Invalid initializer value for identifier: a", lpg::syntax::source_location{0, 3}}},
+        {lpg::syntax::parse_error{"Unexpected end of stream", lpg::syntax::source_location{0, 8}},
+         lpg::syntax::parse_error{"Invalid initializer value for identifier: a", lpg::syntax::source_location{0, 4}}},
         lpg::syntax::sequence{});
 }
 

@@ -10,15 +10,16 @@ namespace lpg
 {
     enum class evaluate_error_type
     {
+        poison_reached,
+        local_initialized_twice,
+        read_uninitialized_local,
         not_callable,
-        unknown_identifier,
-        redeclaration
+        invalid_argument_type
     };
 
     struct evaluate_error
     {
         evaluate_error_type type;
-        std::string identifier;
     };
 
     bool operator==(evaluate_error const &left, evaluate_error const &right);
@@ -26,12 +27,6 @@ namespace lpg
 
     using run_result = std::variant<std::string, evaluate_error>;
 
-    struct void_
-    {
-    };
-
-    using value = std::variant<std::string, semantics::builtin_functions, void_>;
-    using local_variable_map = std::map<std::string, value>;
-
-    [[nodiscard]] run_result run(std::string_view source, std::function<void(syntax::parse_error)> on_error);
+    [[nodiscard]] run_result run(std::string_view source, std::function<void(syntax::parse_error)> on_syntax_error,
+                                 semantics::semantic_error_handler on_semantic_error);
 } // namespace lpg
