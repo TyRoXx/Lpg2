@@ -1,5 +1,4 @@
 #pragma once
-
 #include <cassert>
 #include <compare>
 #include <optional>
@@ -7,7 +6,7 @@
 #include <string_view>
 #include <variant>
 
-namespace lpg
+namespace lpg::syntax
 {
     struct source_location
     {
@@ -28,7 +27,7 @@ namespace lpg
         std::weak_ordering operator<=>(identifier const &other) const noexcept = default;
     };
 
-    std::ostream &operator<<(std::ostream &out, const lpg::identifier &value);
+    std::ostream &operator<<(std::ostream &out, const identifier &value);
 
     enum class special_character
     {
@@ -40,7 +39,7 @@ namespace lpg
         assign
     };
 
-    std::ostream &operator<<(std::ostream &out, lpg::special_character value);
+    std::ostream &operator<<(std::ostream &out, special_character value);
 
     struct string_literal
     {
@@ -48,7 +47,7 @@ namespace lpg
         std::weak_ordering operator<=>(string_literal const &other) const noexcept = default;
     };
 
-    std::ostream &operator<<(std::ostream &out, const lpg::string_literal &value);
+    std::ostream &operator<<(std::ostream &out, const string_literal &value);
 
     struct comment
     {
@@ -100,7 +99,10 @@ namespace lpg
         [[nodiscard]] std::optional<token> pop();
         [[nodiscard]] std::optional<token> peek();
     };
+} // namespace lpg::syntax
 
+namespace lpg
+{
     template <class T>
     [[nodiscard]] std::string format(T const &value)
     {

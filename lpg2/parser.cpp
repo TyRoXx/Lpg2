@@ -12,7 +12,7 @@
 #define LPG_UNREACHABLE() __builtin_unreachable()
 #endif
 
-namespace lpg
+namespace lpg::syntax
 {
     std::ostream &operator<<(std::ostream &out, const non_comment &value)
     {
@@ -386,8 +386,8 @@ namespace lpg
         sequence parsed = parser.parse_sequence(false);
         if (parser.tokens.has_failed)
         {
-            on_error(lpg::parse_error{"Tokenization failed", parser.tokens.next_location});
+            on_error(parse_error{"Tokenization failed", parser.tokens.next_location});
         }
         return parsed;
     }
-} // namespace lpg
+} // namespace lpg::syntax

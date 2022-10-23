@@ -1,5 +1,4 @@
 #pragma once
-
 #include "tokenizer.h"
 #include <functional>
 #include <memory>
@@ -7,7 +6,7 @@
 #include <variant>
 #include <vector>
 
-namespace lpg
+namespace lpg::syntax
 {
     using non_comment_content = std::variant<identifier, special_character, string_literal>;
 
@@ -101,5 +100,5 @@ namespace lpg
         bool expect_special_character(special_character special_character);
     };
 
-    [[nodiscard]] lpg::sequence compile(std::string_view source, std::function<void(parse_error)> on_error);
-} // namespace lpg
+    [[nodiscard]] sequence compile(std::string_view source, std::function<void(parse_error)> on_error);
+} // namespace lpg::syntax

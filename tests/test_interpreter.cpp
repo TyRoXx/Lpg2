@@ -4,7 +4,7 @@
 
 namespace
 {
-    void fail_on_error(lpg::parse_error result)
+    void fail_on_error(lpg::syntax::parse_error result)
     {
         FAIL(result);
     }

@@ -18,7 +18,7 @@ static void benchmark_tokenizer(benchmark::State &state)
     size_t i = 0;
     for (auto _ : state)
     {
-        lpg::scanner s(string);
+        lpg::syntax::scanner s(string);
         for (;;)
         {
             auto t = s.pop();
