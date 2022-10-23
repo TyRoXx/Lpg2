@@ -5,7 +5,7 @@ namespace lpg::semantics
 {
     struct local_id final
     {
-        uint32_t value;
+        size_t value;
     };
 
     enum class builtin_functions

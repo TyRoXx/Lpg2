@@ -42,13 +42,6 @@ TEST_CASE("print_twice")
           lpg::run(R"aaa(print("a")print("b"))aaa", fail_on_parse_error, fail_on_semantic_error));
 }
 
-TEST_CASE("argument_type_mismatch")
-{
-    // TODO
-    // CHECK(lpg::run_result{lpg::evaluate_error{lpg::evaluate_error_type::not_callable}} ==
-    // lpg::run(R"aaa(print(print))aaa", fail_on_error));
-}
-
 TEST_CASE("parentheses")
 {
     CHECK(lpg::run_result{"Hello, world!"} ==

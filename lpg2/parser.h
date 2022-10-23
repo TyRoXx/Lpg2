@@ -41,6 +41,9 @@ namespace lpg::syntax
     struct sequence
     {
         std::vector<expression> elements;
+        source_location location;
+
+        sequence(std::vector<expression> elements, source_location location);
     };
 
     std::ostream &operator<<(std::ostream &out, const sequence &value);
@@ -66,13 +69,24 @@ namespace lpg::syntax
     std::ostream &operator<<(std::ostream &out, const declaration &value);
     bool operator==(const declaration &left, const declaration &right) noexcept;
 
+    struct string_literal_expression
+    {
+        string_literal literal;
+        source_location location;
+
+        std::weak_ordering operator<=>(string_literal_expression const &other) const noexcept = default;
+    };
+
+    std::ostream &operator<<(std::ostream &out, const string_literal_expression &value);
+
     struct expression
     {
-        std::variant<string_literal, identifier, call, sequence, declaration> value;
+        std::variant<string_literal_expression, identifier, call, sequence, declaration> value;
     };
 
     std::ostream &operator<<(std::ostream &out, const expression &value);
     bool operator==(const expression &left, const expression &right) noexcept;
+    [[nodiscard]] source_location get_location(expression const &tree);
 
     std::optional<non_comment> peek_next_non_comment(scanner &tokens);
     std::optional<non_comment> pop_next_non_comment(scanner &tokens);
@@ -98,12 +112,12 @@ namespace lpg::syntax
         scanner tokens;
         std::function<void(parse_error)> on_error;
 
-        sequence parse_sequence(bool is_in_braces);
+        sequence parse_sequence(bool is_in_braces, source_location const &start_location);
 
     private:
         std::optional<expression> parse_expression();
         std::optional<expression> parse_parentheses();
-        std::optional<expression> parse_braces();
+        std::optional<expression> parse_braces(source_location const &start_location);
         std::optional<expression> parse_call(expression callee);
         std::optional<declaration> parse_declaration();
 

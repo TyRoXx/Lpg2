@@ -65,9 +65,15 @@ namespace lpg::syntax
         return PointeesEqual(left.callee, right.callee) && PointeesEqual(left.argument, right.argument);
     }
 
+    sequence::sequence(std::vector<expression> elements, source_location location)
+        : elements(move(elements))
+        , location(location)
+    {
+    }
+
     std::ostream &operator<<(std::ostream &out, const sequence &value)
     {
-        out << '{';
+        out << value.location << ':{';
         for (size_t i = 0; i < value.elements.size(); ++i)
         {
             if (i > 0)
@@ -81,7 +87,7 @@ namespace lpg::syntax
 
     bool operator==(const sequence &left, const sequence &right) noexcept
     {
-        return (left.elements == right.elements);
+        return (left.elements == right.elements) && (left.location == right.location);
     }
 
     std::ostream &operator<<(std::ostream &out, const declaration &value)
@@ -110,6 +116,11 @@ namespace lpg::syntax
         return (left.name == right.name) && PointeesEqual(left.initializer, right.initializer);
     }
 
+    std::ostream &operator<<(std::ostream &out, const string_literal_expression &value)
+    {
+        return out << value.location << ":" << value.literal;
+    }
+
     std::ostream &operator<<(std::ostream &out, const expression &value)
     {
         return out << value.value;
@@ -118,6 +129,17 @@ namespace lpg::syntax
     bool operator==(const expression &left, const expression &right) noexcept
     {
         return left.value == right.value;
+    }
+
+    source_location get_location(expression const &tree)
+    {
+        return std::visit(
+            overloaded{[](string_literal_expression const &string) -> source_location { return string.location; },
+                       [](identifier const &identifier_) -> source_location { return identifier_.location; },
+                       [](call const &call_) -> source_location { return get_location(*call_.callee); },
+                       [](sequence const &sequence_) -> source_location { return sequence_.location; },
+                       [](declaration const &declaration_) -> source_location { return declaration_.name.location; }},
+            tree.value);
     }
 
     std::optional<non_comment> peek_next_non_comment(scanner &tokens)
@@ -280,7 +302,7 @@ namespace lpg::syntax
                         on_error(parse_error({"Can not have a closing parenthesis here.", next_token->location}));
                         return std::nullopt;
                     case special_character::left_brace:
-                        return parse_braces();
+                        return parse_braces(next_token->location);
                     case special_character::right_brace:
                         on_error(parse_error({"Can not have a closing parenthesis here.", next_token->location}));
                         return std::nullopt;
@@ -293,7 +315,9 @@ namespace lpg::syntax
                     }
                     LPG_UNREACHABLE();
                 },
-                [](string_literal const &literal) -> std::optional<expression> { return expression{literal}; }},
+                [&next_token](string_literal const &literal) -> std::optional<expression> {
+                    return expression{string_literal_expression{literal, next_token->location}};
+                }},
             next_token->content);
 
         std::optional<non_comment> right_side = peek_next_non_comment(tokens);
@@ -329,9 +353,9 @@ namespace lpg::syntax
             right_side->content);
     }
 
-    sequence parser::parse_sequence(const bool is_in_braces)
+    sequence parser::parse_sequence(const bool is_in_braces, source_location const &start_location)
     {
-        sequence result;
+        sequence result{{}, start_location};
         for (;;)
         {
             std::optional<non_comment> maybe_token = peek_next_non_comment(tokens);
@@ -373,9 +397,9 @@ namespace lpg::syntax
         return result;
     }
 
-    std::optional<expression> parser::parse_braces()
+    std::optional<expression> parser::parse_braces(source_location const &start_location)
     {
-        return expression{parse_sequence(true)};
+        return expression{parse_sequence(true, start_location)};
     }
 
     std::optional<expression> parser::parse_call(expression callee)
@@ -396,7 +420,7 @@ namespace lpg::syntax
     sequence compile(std::string_view source, std::function<void(parse_error)> on_error)
     {
         parser parser(scanner{source}, on_error);
-        sequence parsed = parser.parse_sequence(false);
+        sequence parsed = parser.parse_sequence(false, source_location{0, 0});
         if (parser.tokens.has_failed)
         {
             on_error(parse_error{"Tokenization failed", parser.tokens.next_location});

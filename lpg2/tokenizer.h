@@ -44,6 +44,7 @@ namespace lpg::syntax
     struct string_literal
     {
         std::string_view inner_content;
+
         std::weak_ordering operator<=>(string_literal const &other) const noexcept = default;
     };
 
