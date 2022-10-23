@@ -78,7 +78,7 @@ TEST_CASE("scan_identifier")
     lpg::syntax::token const t = s.pop().value();
     CHECK(lpg::syntax::source_location(0, 0) == t.location);
     CHECK(!s.peek());
-    lpg::syntax::identifier id = std::get<lpg::syntax::identifier>(t.content);
+    lpg::syntax::identifier_token id = std::get<lpg::syntax::identifier_token>(t.content);
     CHECK(id.content == "test");
     CHECK(!s.has_failed);
 }
@@ -133,7 +133,7 @@ TEST_CASE("scan_comment")
     CHECK(lpg::syntax::source_location(0, 16) == t.location);
     CHECK(s.peek());
 
-    lpg::syntax::identifier id = std::get<lpg::syntax::identifier>(t.content);
+    lpg::syntax::identifier_token id = std::get<lpg::syntax::identifier_token>(t.content);
     CHECK(id.content == "test");
     CHECK(!s.has_failed);
 }
@@ -145,10 +145,10 @@ TEST_CASE("print_special_character")
     CHECK(s.str() == "0");
 }
 
-TEST_CASE("print_identifier")
+TEST_CASE("print_identifier_token")
 {
     std::ostringstream s;
-    s << lpg::syntax::identifier{"name"};
+    s << lpg::syntax::identifier_token{"name"};
     CHECK(s.str() == "name");
 }
 
@@ -171,11 +171,12 @@ TEST_CASE("ignore_spaces")
     auto s = lpg::syntax::scanner("let a");
     lpg::syntax::non_comment const let_token = pop_next_non_comment(s).value();
     CHECK(s.peek());
-    CHECK(let_token == lpg::syntax::non_comment{lpg::syntax::identifier{"let"}, lpg::syntax::source_location{0, 0}});
+    CHECK(let_token ==
+          lpg::syntax::non_comment{lpg::syntax::identifier_token{"let"}, lpg::syntax::source_location{0, 0}});
 
     lpg::syntax::non_comment const id_token = pop_next_non_comment(s).value();
     CHECK(!s.peek());
-    CHECK(id_token == lpg::syntax::non_comment{lpg::syntax::identifier{"a"}, lpg::syntax::source_location{0, 3}});
+    CHECK(id_token == lpg::syntax::non_comment{lpg::syntax::identifier_token{"a"}, lpg::syntax::source_location{0, 3}});
     CHECK(!s.has_failed);
 }
 

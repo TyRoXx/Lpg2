@@ -1,5 +1,5 @@
 #pragma once
-#include "parser.h"
+#include "type_checker.h"
 #include <map>
 #include <optional>
 #include <ostream>
@@ -26,16 +26,11 @@ namespace lpg
 
     using run_result = std::variant<std::string, evaluate_error>;
 
-    enum class builtin_functions
-    {
-        print
-    };
-
     struct void_
     {
     };
 
-    using value = std::variant<std::string, builtin_functions, void_>;
+    using value = std::variant<std::string, semantics::builtin_functions, void_>;
     using local_variable_map = std::map<std::string, value>;
 
     [[nodiscard]] run_result run(std::string_view source, std::function<void(syntax::parse_error)> on_error);

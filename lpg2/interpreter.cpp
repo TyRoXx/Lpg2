@@ -33,22 +33,22 @@ namespace lpg
             BOOST_OUTCOME_TRY(value const callee, evaluate(*function.callee, locals, output));
             BOOST_OUTCOME_TRY(value const argument, evaluate(*function.argument, locals, output));
 
-            return std::visit(
-                overloaded{
-                    [&output](builtin_functions const callee, std::string const &argument) -> evaluate_result {
-                        switch (callee)
-                        {
-                        case builtin_functions::print:
-                            output += argument;
-                            break;
-                        }
-                        return void_{};
-                    },
-                    [](auto const &, auto const &) -> evaluate_result {
-                        return evaluate_error{evaluate_error_type::not_callable};
-                    },
-                },
-                callee, argument);
+            return std::visit(overloaded{
+                                  [&output](semantics::builtin_functions const callee,
+                                            std::string const &argument) -> evaluate_result {
+                                      switch (callee)
+                                      {
+                                      case semantics::builtin_functions::print:
+                                          output += argument;
+                                          break;
+                                      }
+                                      return void_{};
+                                  },
+                                  [](auto const &, auto const &) -> evaluate_result {
+                                      return evaluate_error{evaluate_error_type::not_callable};
+                                  },
+                              },
+                              callee, argument);
         }
 
         [[nodiscard]] evaluate_result evaluate_sequence(syntax::sequence const &to_evaluate, local_variable_map &locals,
@@ -81,7 +81,7 @@ namespace lpg
                     [&locals](syntax::identifier name) -> evaluate_result {
                         if (name.content == "print")
                         {
-                            return builtin_functions::print;
+                            return semantics::builtin_functions::print;
                         }
                         auto const found = locals.find(std::string(name.content));
                         if (found == locals.end())

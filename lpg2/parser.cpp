@@ -94,6 +94,17 @@ namespace lpg::syntax
         return out << " = " << *value.initializer;
     }
 
+    identifier::identifier(std::string_view content, source_location location)
+        : content(content)
+        , location(location)
+    {
+    }
+
+    std::ostream &operator<<(std::ostream &out, const identifier &value)
+    {
+        return out << value.content << "(" << value.location << ")";
+    }
+
     bool operator==(const declaration &left, const declaration &right) noexcept
     {
         return (left.name == right.name) && PointeesEqual(left.initializer, right.initializer);
@@ -166,7 +177,7 @@ namespace lpg::syntax
         return out << value.where << ": " << value.error_message;
     }
 
-    std::tuple<std::optional<identifier>, source_location> parser::expect_identifier()
+    std::tuple<std::optional<identifier_token>, source_location> parser::expect_identifier()
     {
         std::optional<token> token = tokens.pop();
 
@@ -176,16 +187,17 @@ namespace lpg::syntax
             return std::make_tuple(std::nullopt, tokens.next_location);
         }
 
-        return std::make_tuple(
-            std::visit(overloaded{
-                           [](identifier &&identifier_) -> std::optional<identifier> { return std::move(identifier_); },
-                           [this, &token](auto &&) -> std::optional<identifier> {
-                               on_error(parse_error({"Expected identifier", token->location}));
-                               return std::nullopt;
-                           },
-                       },
-                       std::move(token->content)),
-            token->location);
+        return std::make_tuple(std::visit(overloaded{
+                                              [](identifier_token &&identifier_) -> std::optional<identifier_token> {
+                                                  return std::move(identifier_);
+                                              },
+                                              [this, &token](auto &&) -> std::optional<identifier_token> {
+                                                  on_error(parse_error({"Expected identifier", token->location}));
+                                                  return std::nullopt;
+                                              },
+                                          },
+                                          std::move(token->content)),
+                               token->location);
     }
 
     std::optional<declaration> parser::parse_declaration()
@@ -209,7 +221,8 @@ namespace lpg::syntax
                 "Invalid initializer value for identifier: " + std::string(name.value().content), location});
             return std::nullopt;
         }
-        return declaration{name.value(), std::make_unique<expression>(std::move(initializer.value()))};
+        return declaration{
+            identifier{name->content, location}, std::make_unique<expression>(std::move(initializer.value()))};
     }
 
     bool parser::expect_special_character(special_character expected)
@@ -246,7 +259,7 @@ namespace lpg::syntax
 
         std::optional<expression> left_side = std::visit(
             overloaded{
-                [this](identifier const &callee) -> std::optional<expression> {
+                [this, &next_token](identifier_token const &callee) -> std::optional<expression> {
                     if (callee.content == "let")
                     {
                         std::optional<declaration> declaration = parse_declaration();
@@ -256,7 +269,7 @@ namespace lpg::syntax
                         }
                         return expression{std::move(declaration.value())};
                     }
-                    return expression{callee};
+                    return expression{identifier{callee.content, next_token->location}};
                 },
                 [this, &next_token](special_character character) -> std::optional<expression> {
                     switch (character)
@@ -291,7 +304,7 @@ namespace lpg::syntax
 
         return std::visit(
             overloaded{
-                [&left_side](identifier const &) -> std::optional<expression> { return std::move(left_side); },
+                [&left_side](identifier_token const &) -> std::optional<expression> { return std::move(left_side); },
                 [this, &left_side, &right_side](special_character character) -> std::optional<expression> {
                     switch (character)
                     {

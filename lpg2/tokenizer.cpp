@@ -13,7 +13,8 @@ namespace lpg::syntax
     {
         return out << (value.line + 1) << ":" << (value.column + 1);
     }
-    std::ostream &operator<<(std::ostream &out, const identifier &value)
+
+    std::ostream &operator<<(std::ostream &out, const identifier_token &value)
     {
         return out << value.content;
     }
@@ -190,8 +191,8 @@ namespace lpg::syntax
                 ++next;
                 ++next_location.column;
             }
-            peeked =
-                token{identifier{std::string_view(&*identifier_begin, next - identifier_begin)}, identifier_location};
+            peeked = token{
+                identifier_token{std::string_view(&*identifier_begin, next - identifier_begin)}, identifier_location};
             return peeked;
         }
         peeked = std::nullopt;

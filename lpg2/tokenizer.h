@@ -20,14 +20,14 @@ namespace lpg::syntax
 
     std::ostream &operator<<(std::ostream &out, const source_location &value);
 
-    struct identifier
+    struct identifier_token
     {
         std::string_view content;
 
-        std::weak_ordering operator<=>(identifier const &other) const noexcept = default;
+        std::weak_ordering operator<=>(identifier_token const &other) const noexcept = default;
     };
 
-    std::ostream &operator<<(std::ostream &out, const identifier &value);
+    std::ostream &operator<<(std::ostream &out, const identifier_token &value);
 
     enum class special_character
     {
@@ -58,7 +58,7 @@ namespace lpg::syntax
 
     std::ostream &operator<<(std::ostream &out, const comment &value);
 
-    using token_content = std::variant<identifier, special_character, string_literal, comment>;
+    using token_content = std::variant<identifier_token, special_character, string_literal, comment>;
 
     struct token
     {

@@ -8,7 +8,7 @@
 
 namespace lpg::syntax
 {
-    using non_comment_content = std::variant<identifier, special_character, string_literal>;
+    using non_comment_content = std::variant<identifier_token, special_character, string_literal>;
 
     struct non_comment
     {
@@ -45,6 +45,17 @@ namespace lpg::syntax
 
     std::ostream &operator<<(std::ostream &out, const sequence &value);
     bool operator==(const sequence &left, const sequence &right) noexcept;
+
+    struct identifier
+    {
+        std::string_view content;
+        source_location location;
+
+        identifier(std::string_view content, source_location location);
+        std::weak_ordering operator<=>(identifier const &other) const noexcept = default;
+    };
+
+    std::ostream &operator<<(std::ostream &out, const identifier &value);
 
     struct declaration
     {
@@ -96,7 +107,7 @@ namespace lpg::syntax
         std::optional<expression> parse_call(expression callee);
         std::optional<declaration> parse_declaration();
 
-        std::tuple<std::optional<identifier>, source_location> expect_identifier();
+        std::tuple<std::optional<identifier_token>, source_location> expect_identifier();
         bool expect_special_character(special_character special_character);
     };
 
