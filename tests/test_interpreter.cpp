@@ -141,10 +141,19 @@ let b = false
                                           fail_on_parse_error, fail_on_semantic_error));
 }
 
-TEST_CASE("equals")
+TEST_CASE("equals_string")
 {
     CHECK(lpg::run_result{""} == lpg::run(R"(
 let equal = "a" == "b"
+)",
+                                          fail_on_parse_error, fail_on_semantic_error));
+}
+
+TEST_CASE("binary_operator_as_function_pointer")
+{
+    CHECK(lpg::run_result{""} == lpg::run(R"(
+let equals = ==
+let b = equals("a", "b")
 )",
                                           fail_on_parse_error, fail_on_semantic_error));
 }

@@ -32,7 +32,7 @@ namespace lpg::syntax
     struct call
     {
         std::unique_ptr<expression> callee;
-        std::unique_ptr<expression> argument;
+        std::vector<std::unique_ptr<expression>> arguments;
     };
 
     std::ostream &operator<<(std::ostream &out, const call &value);
@@ -106,10 +106,20 @@ namespace lpg::syntax
     std::ostream &operator<<(std::ostream &out, const binary_operator_expression &value);
     bool operator==(const binary_operator_expression &left, const binary_operator_expression &right) noexcept;
 
+    struct binary_operator_literal_expression
+    {
+        binary_operator which;
+        source_location location;
+
+        std::weak_ordering operator<=>(binary_operator_literal_expression const &other) const noexcept = default;
+    };
+
+    std::ostream &operator<<(std::ostream &out, const binary_operator_literal_expression &value);
+
     struct expression
     {
         std::variant<string_literal_expression, identifier, call, sequence, declaration, keyword_expression,
-                     binary_operator_expression>
+                     binary_operator_expression, binary_operator_literal_expression>
             value;
     };
 

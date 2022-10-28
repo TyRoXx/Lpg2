@@ -89,26 +89,62 @@ namespace lpg::semantics
                     },
                     [&checker, &output](syntax::call const &call_input) -> local_id {
                         local_id const callee = check_expression(checker, *call_input.callee, output);
-                        if (checker.type_of(callee) != type::print)
+                        std::vector<local_id> arguments;
+                        arguments.reserve(call_input.arguments.size());
+                        for (std::unique_ptr<syntax::expression> const &argument_expression : call_input.arguments)
                         {
+                            local_id const argument = check_expression(checker, *argument_expression, output);
+                            arguments.emplace_back(argument);
+                        }
+                        type const function_type = checker.type_of(callee);
+                        switch (function_type)
+                        {
+                        case type::string:
+                        case type::void_:
+                        case type::poison:
+                        case type::boolean: {
                             checker.on_error(
                                 semantic_error{"This value is not callable", get_location(*call_input.callee)});
                             local_id const poison_id = checker.allocate_local(type::poison);
                             output.elements.emplace_back(poison{poison_id});
                             return poison_id;
                         }
-                        local_id const argument = check_expression(checker, *call_input.argument, output);
-                        if (checker.type_of(argument) != type::string)
-                        {
-                            checker.on_error(
-                                semantic_error{"Argument type mismatch", get_location(*call_input.argument)});
-                            local_id const poison_id = checker.allocate_local(type::poison);
-                            output.elements.emplace_back(poison{poison_id});
-                            return poison_id;
+                        case type::print: {
+                            if (checker.type_of(arguments[0]) != type::string)
+                            {
+                                checker.on_error(
+                                    semantic_error{"Argument type mismatch", get_location(*call_input.arguments[0])});
+                                local_id const poison_id = checker.allocate_local(type::poison);
+                                output.elements.emplace_back(poison{poison_id});
+                                return poison_id;
+                            }
+                            local_id const result = checker.allocate_local(type::void_);
+                            output.elements.emplace_back(call{result, callee, std::move(arguments)});
+                            return result;
                         }
-                        local_id const result = checker.allocate_local(type::void_);
-                        output.elements.emplace_back(call{result, callee, {argument}});
-                        return result;
+                        case type::equals_string: {
+                            if (checker.type_of(arguments[0]) != type::string)
+                            {
+                                checker.on_error(
+                                    semantic_error{"Argument type mismatch", get_location(*call_input.arguments[0])});
+                                local_id const poison_id = checker.allocate_local(type::poison);
+                                output.elements.emplace_back(poison{poison_id});
+                                return poison_id;
+                            }
+                            if (checker.type_of(arguments[1]) != type::string)
+                            {
+                                checker.on_error(
+                                    semantic_error{"Argument type mismatch", get_location(*call_input.arguments[1])});
+                                local_id const poison_id = checker.allocate_local(type::poison);
+                                output.elements.emplace_back(poison{poison_id});
+                                return poison_id;
+                            }
+                            local_id const result = checker.allocate_local(type::boolean);
+                            output.elements.emplace_back(call{result, callee, std::move(arguments)});
+                            return result;
+                        }
+                        }
+                        LPG_UNREACHABLE();
                     },
                     [&checker, &output](syntax::sequence const &sequence_input) -> local_id {
                         return check_sequence(checker, sequence_input, output);
@@ -159,6 +195,16 @@ namespace lpg::semantics
                         local_id const result = checker.allocate_local(type::boolean);
                         output.elements.emplace_back(call{result, callee, {left, right}});
                         return result;
+                    },
+                    [&checker, &output](syntax::binary_operator_literal_expression const &literal_input) -> local_id {
+                        switch (literal_input.which)
+                        {
+                        case syntax::binary_operator::equals:
+                            local_id const destination = checker.allocate_local(type::equals_string);
+                            output.elements.emplace_back(builtin{destination, builtin_functions::equals_string});
+                            return destination;
+                        }
+                        LPG_UNREACHABLE();
                     }},
                 input.value);
         }

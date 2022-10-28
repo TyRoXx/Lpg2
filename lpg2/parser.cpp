@@ -26,9 +26,18 @@ namespace lpg::syntax
 
     std::ostream &operator<<(std::ostream &out, const call &value)
     {
-        if (value.callee && value.argument)
+        if (value.callee)
         {
-            return out << *value.callee << "(" << *value.argument << ")";
+            out << *value.callee << "(";
+            for (size_t i = 0; i < value.arguments.size(); ++i)
+            {
+                if (i > 0)
+                {
+                    out << ", ";
+                }
+                out << *value.arguments[i];
+            }
+            return out << ")";
         }
         return out << "call with missing callee or argument";
     }
@@ -52,7 +61,18 @@ namespace lpg::syntax
 
     bool operator==(const call &left, const call &right) noexcept
     {
-        return PointeesEqual(left.callee, right.callee) && PointeesEqual(left.argument, right.argument);
+        if (left.arguments.size() != right.arguments.size())
+        {
+            return false;
+        }
+        for (size_t i = 0; i < left.arguments.size(); ++i)
+        {
+            if (!PointeesEqual(left.arguments[i], right.arguments[i]))
+            {
+                return false;
+            }
+        }
+        return PointeesEqual(left.callee, right.callee);
     }
 
     sequence::sequence(std::vector<expression> elements, source_location location)
@@ -136,6 +156,11 @@ namespace lpg::syntax
         return (*left.left == *right.left) && (left.which == right.which) && (*left.right == *right.right);
     }
 
+    std::ostream &operator<<(std::ostream &out, const binary_operator_literal_expression &value)
+    {
+        return out << value.location << ":" << value.which;
+    }
+
     std::ostream &operator<<(std::ostream &out, const expression &value)
     {
         return out << value.value;
@@ -149,15 +174,17 @@ namespace lpg::syntax
     source_location get_location(expression const &tree)
     {
         return std::visit(
-            overloaded{[](string_literal_expression const &string) -> source_location { return string.location; },
-                       [](identifier const &identifier_) -> source_location { return identifier_.location; },
-                       [](call const &call_) -> source_location { return get_location(*call_.callee); },
-                       [](sequence const &sequence_) -> source_location { return sequence_.location; },
-                       [](declaration const &declaration_) -> source_location { return declaration_.name.location; },
-                       [](keyword_expression const &keyword) -> source_location { return keyword.location; },
-                       [](binary_operator_expression const &binary_operator) -> source_location {
-                           return get_location(*binary_operator.left);
-                       }},
+            overloaded{
+                [](string_literal_expression const &string) -> source_location { return string.location; },
+                [](identifier const &identifier_) -> source_location { return identifier_.location; },
+                [](call const &call_) -> source_location { return get_location(*call_.callee); },
+                [](sequence const &sequence_) -> source_location { return sequence_.location; },
+                [](declaration const &declaration_) -> source_location { return declaration_.name.location; },
+                [](keyword_expression const &keyword) -> source_location { return keyword.location; },
+                [](binary_operator_expression const &binary_operator) -> source_location {
+                    return get_location(*binary_operator.left);
+                },
+                [](binary_operator_literal_expression const &literal) -> source_location { return literal.location; }},
             tree.value);
     }
 
@@ -332,7 +359,10 @@ namespace lpg::syntax
                         on_error(parse_error({"Can not have an assignment operator here.", next_token->location}));
                         return std::nullopt;
                     case special_character::equals:
-                        on_error(parse_error({"Can not have an equals operator here.", next_token->location}));
+                        return expression{
+                            binary_operator_literal_expression{binary_operator::equals, next_token->location}};
+                    case special_character::comma:
+                        on_error(parse_error({"Can not have a comma operator here.", next_token->location}));
                         return std::nullopt;
                     }
                     LPG_UNREACHABLE();
@@ -385,6 +415,8 @@ namespace lpg::syntax
                             binary_operator::equals, std::make_unique<expression>(std::move(*left_side)),
                             std::make_unique<expression>(std::move(*right_argument))}};
                     }
+                    case special_character::comma:
+                        return std::move(left_side);
                     }
                     LPG_UNREACHABLE();
                 },
@@ -446,15 +478,37 @@ namespace lpg::syntax
     {
         // popping off the left parenthesis
         token const parenthesis = tokens.pop().value();
-        std::optional<expression> argument = parse_expression();
-        if (!argument)
+        std::vector<std::unique_ptr<expression>> arguments;
+        for (;;)
         {
-            on_error(parse_error{"Could not parse argument of the function", parenthesis.location});
-            return std::nullopt;
+            {
+                std::optional<non_comment> maybe_next = peek_next_non_comment(tokens);
+                if (!maybe_next)
+                {
+                    on_error(parse_error{"Could not parse arguments of the function", parenthesis.location});
+                    return std::nullopt;
+                }
+                special_character const *const token = std::get_if<special_character>(&maybe_next->content);
+                if (token && (*token == special_character::right_parenthesis))
+                {
+                    (void)tokens.pop();
+                    return expression{call{std::make_unique<expression>(std::move(callee)), std::move(arguments)}};
+                }
+            }
+            if (!arguments.empty() && !expect_special_character(special_character::comma))
+            {
+                return std::nullopt;
+            }
+            {
+                std::optional<expression> argument = parse_expression();
+                if (!argument)
+                {
+                    on_error(parse_error{"Could not parse argument of the function", parenthesis.location});
+                    return std::nullopt;
+                }
+                arguments.emplace_back(std::make_unique<expression>(std::move(*argument)));
+            }
         }
-        expect_special_character(special_character::right_parenthesis);
-        return expression{call{std::make_unique<expression>(std::move(callee)),
-                               std::make_unique<expression>(std::move(argument.value()))}};
     }
 
     sequence compile(std::string_view source, std::function<void(parse_error)> on_error)

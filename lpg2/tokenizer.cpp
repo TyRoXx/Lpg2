@@ -127,6 +127,13 @@ namespace lpg::syntax
             ++next_location.column;
             return peeked;
         }
+        if (head == ',')
+        {
+            peeked = token{special_character::comma, next_location};
+            ++next;
+            ++next_location.column;
+            return peeked;
+        }
         if (head == '=')
         {
             source_location const begin_of_token = next_location;

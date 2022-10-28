@@ -47,7 +47,8 @@ namespace lpg::syntax
         right_brace,
         slash,
         assign,
-        equals
+        equals,
+        comma
     };
 
     std::ostream &operator<<(std::ostream &out, special_character value);

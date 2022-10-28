@@ -124,8 +124,7 @@ TEST_CASE("parse_argument_error")
 {
     expect_compilation_error(
         "f(",
-        {lpg::syntax::parse_error{"Unexpected end of stream", lpg::syntax::source_location{0, 2}},
-         lpg::syntax::parse_error{"Could not parse argument of the function", lpg::syntax::source_location{0, 1}}},
+        {lpg::syntax::parse_error{"Could not parse arguments of the function", lpg::syntax::source_location{0, 1}}},
         lpg::syntax::sequence{{}, lpg::syntax::source_location{0, 0}});
 }
 
