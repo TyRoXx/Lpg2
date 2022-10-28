@@ -42,6 +42,15 @@ TEST_CASE("print_twice")
           lpg::run(R"aaa(print("a")print("b"))aaa", fail_on_parse_error, fail_on_semantic_error));
 }
 
+TEST_CASE("function_pointer")
+{
+    CHECK(lpg::run_result{"Hello, world!"} == lpg::run(R"aaa(
+let p = print
+print("Hello, world!")
+)aaa",
+                                                       fail_on_parse_error, fail_on_semantic_error));
+}
+
 TEST_CASE("parentheses")
 {
     CHECK(lpg::run_result{"Hello, world!"} ==
