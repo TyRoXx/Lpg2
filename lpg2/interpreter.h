@@ -14,7 +14,8 @@ namespace lpg
         local_initialized_twice,
         read_uninitialized_local,
         not_callable,
-        invalid_argument_type
+        invalid_argument_type,
+        invalid_argument_count
     };
 
     struct evaluate_error

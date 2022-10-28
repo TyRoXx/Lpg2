@@ -116,6 +116,17 @@ TEST_CASE("scan_slash")
     CHECK(!s.has_failed);
 }
 
+TEST_CASE("scan_equals")
+{
+    auto s = lpg::syntax::scanner("== 2");
+    lpg::syntax::token const t = s.pop().value();
+    CHECK(lpg::syntax::source_location(0, 0) == t.location);
+    CHECK(!s.peek());
+    lpg::syntax::special_character const equals = std::get<lpg::syntax::special_character>(t.content);
+    CHECK(equals == lpg::syntax::special_character::equals);
+    CHECK(!s.has_failed);
+}
+
 TEST_CASE("scan_slash_end_of_file")
 {
     auto s = lpg::syntax::scanner("/");

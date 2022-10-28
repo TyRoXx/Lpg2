@@ -73,11 +73,17 @@ namespace lpg
                         {
                             return maybe_callee.assume_error();
                         }
-                        boost::outcome_v2::result<value, evaluate_error> const maybe_argument =
-                            context.read_local(call_instruction.argument);
-                        if (maybe_argument.has_error())
+                        std::vector<value> arguments;
+                        arguments.reserve(call_instruction.arguments.size());
+                        for (semantics::local_id const argument : call_instruction.arguments)
                         {
-                            return maybe_argument.assume_error();
+                            boost::outcome_v2::result<value, evaluate_error> const maybe_argument =
+                                context.read_local(argument);
+                            if (maybe_argument.has_error())
+                            {
+                                return maybe_argument.assume_error();
+                            }
+                            arguments.emplace_back(std::move(maybe_argument.assume_value()));
                         }
                         semantics::builtin_functions const *const builtin =
                             std::get_if<semantics::builtin_functions>(&maybe_callee.assume_value());
@@ -88,13 +94,34 @@ namespace lpg
                         switch (*builtin)
                         {
                         case semantics::builtin_functions::print: {
-                            std::string const *const message = std::get_if<std::string>(&maybe_argument.assume_value());
+                            if (arguments.size() != 1)
+                            {
+                                return evaluate_error{evaluate_error_type::invalid_argument_count};
+                            }
+                            std::string const *const message = std::get_if<std::string>(&arguments[0]);
                             if (!message)
                             {
                                 return evaluate_error{evaluate_error_type::invalid_argument_type};
                             }
                             context.print_output += *message;
                             break;
+                        }
+                        case semantics::builtin_functions::equals_string: {
+                            if (arguments.size() != 2)
+                            {
+                                return evaluate_error{evaluate_error_type::invalid_argument_count};
+                            }
+                            std::string const *const left = std::get_if<std::string>(&arguments[0]);
+                            if (!left)
+                            {
+                                return evaluate_error{evaluate_error_type::invalid_argument_type};
+                            }
+                            std::string const *const right = std::get_if<std::string>(&arguments[1]);
+                            if (!right)
+                            {
+                                return evaluate_error{evaluate_error_type::invalid_argument_type};
+                            }
+                            return context.initialize_local(call_instruction.result, (*left == *right));
                         }
                         }
                         return std::nullopt;

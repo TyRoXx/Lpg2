@@ -16,6 +16,7 @@ namespace lpg::semantics
             string,
             void_,
             print,
+            equals_string,
             poison,
             boolean
         };
@@ -106,7 +107,7 @@ namespace lpg::semantics
                             return poison_id;
                         }
                         local_id const result = checker.allocate_local(type::void_);
-                        output.elements.emplace_back(call{result, callee, argument});
+                        output.elements.emplace_back(call{result, callee, {argument}});
                         return result;
                     },
                     [&checker, &output](syntax::sequence const &sequence_input) -> local_id {
@@ -141,6 +142,23 @@ namespace lpg::semantics
                             break;
                         }
                         return result_id;
+                    },
+                    [&checker, &output](syntax::binary_operator_expression const &binary_operator_input) -> local_id {
+                        local_id const left = check_expression(checker, *binary_operator_input.left, output);
+                        local_id const right = check_expression(checker, *binary_operator_input.right, output);
+                        if ((checker.type_of(left) != type::string) || (checker.type_of(right) != type::string))
+                        {
+                            checker.on_error(semantic_error{
+                                "These types are not comparable", get_location(*binary_operator_input.left)});
+                            local_id const poison_id = checker.allocate_local(type::poison);
+                            output.elements.emplace_back(poison{poison_id});
+                            return poison_id;
+                        }
+                        local_id const callee = checker.allocate_local(type::equals_string);
+                        output.elements.emplace_back(builtin{callee, builtin_functions::equals_string});
+                        local_id const result = checker.allocate_local(type::boolean);
+                        output.elements.emplace_back(call{result, callee, {left, right}});
+                        return result;
                     }},
                 input.value);
         }

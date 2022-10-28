@@ -140,3 +140,11 @@ let b = false
 )",
                                           fail_on_parse_error, fail_on_semantic_error));
 }
+
+TEST_CASE("equals")
+{
+    CHECK(lpg::run_result{""} == lpg::run(R"(
+let equal = "a" == "b"
+)",
+                                          fail_on_parse_error, fail_on_semantic_error));
+}

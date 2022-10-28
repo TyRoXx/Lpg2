@@ -89,9 +89,28 @@ namespace lpg::syntax
 
     std::ostream &operator<<(std::ostream &out, const keyword_expression &value);
 
+    enum class binary_operator
+    {
+        equals
+    };
+
+    std::ostream &operator<<(std::ostream &out, binary_operator value);
+
+    struct binary_operator_expression
+    {
+        binary_operator which;
+        std::unique_ptr<expression> left;
+        std::unique_ptr<expression> right;
+    };
+
+    std::ostream &operator<<(std::ostream &out, const binary_operator_expression &value);
+    bool operator==(const binary_operator_expression &left, const binary_operator_expression &right) noexcept;
+
     struct expression
     {
-        std::variant<string_literal_expression, identifier, call, sequence, declaration, keyword_expression> value;
+        std::variant<string_literal_expression, identifier, call, sequence, declaration, keyword_expression,
+                     binary_operator_expression>
+            value;
     };
 
     std::ostream &operator<<(std::ostream &out, const expression &value);

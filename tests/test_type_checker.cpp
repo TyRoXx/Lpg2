@@ -50,6 +50,16 @@ TEST_CASE("argument_type_mismatch")
                                                         "Argument type mismatch", lpg::syntax::source_location{0, 6}}});
 }
 
+TEST_CASE("not_comparable")
+{
+    expect_semantic_errors(
+        R"aaa(
+let b = true
+let c = b == "string"
+)aaa",
+        {lpg::semantics::semantic_error{"These types are not comparable", lpg::syntax::source_location{2, 8}}});
+}
+
 TEST_CASE("not_callable")
 {
     expect_semantic_errors(

@@ -129,9 +129,19 @@ namespace lpg::syntax
         }
         if (head == '=')
         {
-            peeked = token{special_character::assign, next_location};
+            source_location const begin_of_token = next_location;
             ++next;
             ++next_location.column;
+            if ((next != end) && (*next == '='))
+            {
+                ++next;
+                ++next_location.column;
+                peeked = token{special_character::equals, begin_of_token};
+            }
+            else
+            {
+                peeked = token{special_character::assign, begin_of_token};
+            }
             return peeked;
         }
         if (head == '/')

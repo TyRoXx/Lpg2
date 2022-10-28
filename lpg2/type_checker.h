@@ -10,7 +10,8 @@ namespace lpg::semantics
 
     enum class builtin_functions
     {
-        print
+        print,
+        equals_string
     };
 
     struct builtin final
@@ -23,7 +24,7 @@ namespace lpg::semantics
     {
         local_id result;
         local_id callee;
-        local_id argument;
+        std::vector<local_id> arguments;
     };
 
     struct string_literal final

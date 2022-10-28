@@ -116,6 +116,26 @@ namespace lpg::syntax
         return out << value.location << ":" << value.which;
     }
 
+    std::ostream &operator<<(std::ostream &out, binary_operator value)
+    {
+        switch (value)
+        {
+        case binary_operator::equals:
+            return out << "==";
+        }
+        LPG_UNREACHABLE();
+    }
+
+    std::ostream &operator<<(std::ostream &out, const binary_operator_expression &value)
+    {
+        return out << *value.left << value.which << *value.right;
+    }
+
+    bool operator==(const binary_operator_expression &left, const binary_operator_expression &right) noexcept
+    {
+        return (*left.left == *right.left) && (left.which == right.which) && (*left.right == *right.right);
+    }
+
     std::ostream &operator<<(std::ostream &out, const expression &value)
     {
         return out << value.value;
@@ -134,7 +154,10 @@ namespace lpg::syntax
                        [](call const &call_) -> source_location { return get_location(*call_.callee); },
                        [](sequence const &sequence_) -> source_location { return sequence_.location; },
                        [](declaration const &declaration_) -> source_location { return declaration_.name.location; },
-                       [](keyword_expression const &keyword) -> source_location { return keyword.location; }},
+                       [](keyword_expression const &keyword) -> source_location { return keyword.location; },
+                       [](binary_operator_expression const &binary_operator) -> source_location {
+                           return get_location(*binary_operator.left);
+                       }},
             tree.value);
     }
 
@@ -308,6 +331,9 @@ namespace lpg::syntax
                     case special_character::assign:
                         on_error(parse_error({"Can not have an assignment operator here.", next_token->location}));
                         return std::nullopt;
+                    case special_character::equals:
+                        on_error(parse_error({"Can not have an equals operator here.", next_token->location}));
+                        return std::nullopt;
                     }
                     LPG_UNREACHABLE();
                 },
@@ -345,6 +371,20 @@ namespace lpg::syntax
                     case special_character::assign:
                         on_error(parse_error{"Can not have an assignment operator here.", right_side->location});
                         return std::nullopt;
+                    case special_character::equals: {
+                        // pop the operator
+                        (void)tokens.pop();
+                        std::optional<expression> right_argument = parse_expression();
+                        if (!right_argument)
+                        {
+                            on_error(parse_error{
+                                "Binary operator requires a right-hand side argument", right_side->location});
+                            return std::move(left_side);
+                        }
+                        return expression{binary_operator_expression{
+                            binary_operator::equals, std::make_unique<expression>(std::move(*left_side)),
+                            std::make_unique<expression>(std::move(*right_argument))}};
+                    }
                     }
                     LPG_UNREACHABLE();
                 },
