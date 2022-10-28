@@ -21,7 +21,7 @@ namespace lpg
         {
         };
 
-        using value = std::variant<std::string, semantics::builtin_functions, void_>;
+        using value = std::variant<std::string, semantics::builtin_functions, void_, bool>;
 
         struct interpreter final
         {
@@ -114,6 +114,9 @@ namespace lpg
                     [](semantics::poison const &poison_instruction) -> std::optional<evaluate_error> {
                         (void)poison_instruction;
                         return evaluate_error{evaluate_error_type::poison_reached};
+                    },
+                    [&context](semantics::boolean_literal const &boolean_instruction) -> std::optional<evaluate_error> {
+                        return context.initialize_local(boolean_instruction.destination, boolean_instruction.value);
                     }},
                 instruction);
         }

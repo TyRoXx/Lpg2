@@ -83,6 +83,28 @@ TEST_CASE("scan_identifier")
     CHECK(!s.has_failed);
 }
 
+TEST_CASE("scan_true")
+{
+    auto s = lpg::syntax::scanner("true");
+    lpg::syntax::token const t = s.pop().value();
+    CHECK(lpg::syntax::source_location(0, 0) == t.location);
+    CHECK(!s.peek());
+    lpg::syntax::keyword const keyword = std::get<lpg::syntax::keyword>(t.content);
+    CHECK(keyword == lpg::syntax::keyword::true_);
+    CHECK(!s.has_failed);
+}
+
+TEST_CASE("scan_false")
+{
+    auto s = lpg::syntax::scanner("false");
+    lpg::syntax::token const t = s.pop().value();
+    CHECK(lpg::syntax::source_location(0, 0) == t.location);
+    CHECK(!s.peek());
+    lpg::syntax::keyword const keyword = std::get<lpg::syntax::keyword>(t.content);
+    CHECK(keyword == lpg::syntax::keyword::false_);
+    CHECK(!s.has_failed);
+}
+
 TEST_CASE("scan_slash")
 {
     auto s = lpg::syntax::scanner("/ 2");

@@ -42,9 +42,15 @@ namespace lpg::semantics
         local_id destination;
     };
 
+    struct boolean_literal final
+    {
+        local_id destination;
+        bool value;
+    };
+
     struct sequence;
 
-    using instruction = std::variant<builtin, call, string_literal, sequence, void_literal, poison>;
+    using instruction = std::variant<builtin, call, string_literal, sequence, void_literal, poison, boolean_literal>;
 
     struct sequence final
     {

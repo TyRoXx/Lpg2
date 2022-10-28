@@ -16,7 +16,8 @@ namespace lpg::semantics
             string,
             void_,
             print,
-            poison
+            poison,
+            boolean
         };
 
         struct type_checker final
@@ -127,6 +128,19 @@ namespace lpg::semantics
                         local_id const void_id = checker.allocate_local(type::void_);
                         output.elements.emplace_back(void_literal{void_id});
                         return void_id;
+                    },
+                    [&checker, &output](syntax::keyword_expression const &keyword_input) -> local_id {
+                        local_id const result_id = checker.allocate_local(type::boolean);
+                        switch (keyword_input.which)
+                        {
+                        case syntax::keyword::true_:
+                            output.elements.emplace_back(boolean_literal{result_id, true});
+                            break;
+                        case syntax::keyword::false_:
+                            output.elements.emplace_back(boolean_literal{result_id, false});
+                            break;
+                        }
+                        return result_id;
                     }},
                 input.value);
         }

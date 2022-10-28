@@ -8,7 +8,7 @@
 
 namespace lpg::syntax
 {
-    using non_comment_content = std::variant<identifier_token, special_character, string_literal>;
+    using non_comment_content = std::variant<identifier_token, special_character, string_literal, keyword>;
 
     struct non_comment
     {
@@ -79,9 +79,19 @@ namespace lpg::syntax
 
     std::ostream &operator<<(std::ostream &out, const string_literal_expression &value);
 
+    struct keyword_expression
+    {
+        keyword which;
+        source_location location;
+
+        std::weak_ordering operator<=>(keyword_expression const &other) const noexcept = default;
+    };
+
+    std::ostream &operator<<(std::ostream &out, const keyword_expression &value);
+
     struct expression
     {
-        std::variant<string_literal_expression, identifier, call, sequence, declaration> value;
+        std::variant<string_literal_expression, identifier, call, sequence, declaration, keyword_expression> value;
     };
 
     std::ostream &operator<<(std::ostream &out, const expression &value);

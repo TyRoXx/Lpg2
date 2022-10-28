@@ -6,6 +6,16 @@
 #include <string_view>
 #include <variant>
 
+#ifdef _MSC_VER
+#define LPG_UNREACHABLE()                                                                                              \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        __assume(false);                                                                                               \
+    } while (false)
+#else
+#define LPG_UNREACHABLE() __builtin_unreachable()
+#endif
+
 namespace lpg::syntax
 {
     struct source_location
@@ -59,7 +69,15 @@ namespace lpg::syntax
 
     std::ostream &operator<<(std::ostream &out, const comment &value);
 
-    using token_content = std::variant<identifier_token, special_character, string_literal, comment>;
+    enum class keyword
+    {
+        true_,
+        false_
+    };
+
+    std::ostream &operator<<(std::ostream &out, keyword value);
+
+    using token_content = std::variant<identifier_token, special_character, string_literal, comment, keyword>;
 
     struct token
     {

@@ -35,6 +35,18 @@ namespace lpg::syntax
         return out << "/*" << value.inner_content << "*/";
     }
 
+    std::ostream &operator<<(std::ostream &out, keyword value)
+    {
+        switch (value)
+        {
+        case keyword::true_:
+            return out << "true";
+        case keyword::false_:
+            return out << "false";
+        }
+        LPG_UNREACHABLE();
+    }
+
     token::token(token_content content, source_location location) noexcept
         : content(std::move(content))
         , location(location)
@@ -195,8 +207,19 @@ namespace lpg::syntax
                 ++next;
                 ++next_location.column;
             }
-            peeked = token{
-                identifier_token{std::string_view(&*identifier_begin, next - identifier_begin)}, identifier_location};
+            auto const identifier_content = std::string_view(&*identifier_begin, next - identifier_begin);
+            if (identifier_content == "true")
+            {
+                peeked = token{keyword::true_, identifier_location};
+            }
+            else if (identifier_content == "false")
+            {
+                peeked = token{keyword::false_, identifier_location};
+            }
+            else
+            {
+                peeked = token{identifier_token{identifier_content}, identifier_location};
+            }
             return peeked;
         }
         peeked = std::nullopt;

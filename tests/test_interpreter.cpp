@@ -124,3 +124,19 @@ print(a)
 )",
                                                      fail_on_parse_error, fail_on_semantic_error));
 }
+
+TEST_CASE("true")
+{
+    CHECK(lpg::run_result{""} == lpg::run(R"(
+let b = true
+)",
+                                          fail_on_parse_error, fail_on_semantic_error));
+}
+
+TEST_CASE("false")
+{
+    CHECK(lpg::run_result{""} == lpg::run(R"(
+let b = false
+)",
+                                          fail_on_parse_error, fail_on_semantic_error));
+}

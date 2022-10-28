@@ -2,16 +2,6 @@
 #include "overloaded.h"
 #include <stdexcept>
 
-#ifdef _MSC_VER
-#define LPG_UNREACHABLE()                                                                                              \
-    do                                                                                                                 \
-    {                                                                                                                  \
-        __assume(false);                                                                                               \
-    } while (false)
-#else
-#define LPG_UNREACHABLE() __builtin_unreachable()
-#endif
-
 namespace lpg::syntax
 {
     std::ostream &operator<<(std::ostream &out, const non_comment &value)
@@ -121,6 +111,11 @@ namespace lpg::syntax
         return out << value.location << ":" << value.literal;
     }
 
+    std::ostream &operator<<(std::ostream &out, const keyword_expression &value)
+    {
+        return out << value.location << ":" << value.which;
+    }
+
     std::ostream &operator<<(std::ostream &out, const expression &value)
     {
         return out << value.value;
@@ -138,7 +133,8 @@ namespace lpg::syntax
                        [](identifier const &identifier_) -> source_location { return identifier_.location; },
                        [](call const &call_) -> source_location { return get_location(*call_.callee); },
                        [](sequence const &sequence_) -> source_location { return sequence_.location; },
-                       [](declaration const &declaration_) -> source_location { return declaration_.name.location; }},
+                       [](declaration const &declaration_) -> source_location { return declaration_.name.location; },
+                       [](keyword_expression const &keyword) -> source_location { return keyword.location; }},
             tree.value);
     }
 
@@ -317,6 +313,9 @@ namespace lpg::syntax
                 },
                 [&next_token](string_literal const &literal) -> std::optional<expression> {
                     return expression{string_literal_expression{literal, next_token->location}};
+                },
+                [&next_token](keyword const keyword_) -> std::optional<expression> {
+                    return expression{keyword_expression{keyword_, next_token->location}};
                 }},
             next_token->content);
 
@@ -349,7 +348,8 @@ namespace lpg::syntax
                     }
                     LPG_UNREACHABLE();
                 },
-                [&left_side](string_literal const &) -> std::optional<expression> { return std::move(left_side); }},
+                [&left_side](string_literal const &) -> std::optional<expression> { return std::move(left_side); },
+                [&left_side](keyword const) -> std::optional<expression> { return std::move(left_side); }},
             right_side->content);
     }
 
