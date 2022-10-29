@@ -19,14 +19,6 @@ namespace lpg::syntax
     std::ostream &operator<<(std::ostream &out, const non_comment &value);
     bool operator==(const non_comment &left, const non_comment &right) noexcept;
 
-    struct print
-    {
-        std::string message;
-    };
-
-    std::ostream &operator<<(std::ostream &out, const print &value);
-    bool operator==(const print &left, const print &right) noexcept;
-
     struct expression;
 
     struct call

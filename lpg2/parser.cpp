@@ -14,16 +14,6 @@ namespace lpg::syntax
         return (left.content == right.content) && (left.location == right.location);
     }
 
-    std::ostream &operator<<(std::ostream &out, const print &value)
-    {
-        return out << "print " << value.message;
-    }
-
-    bool operator==(const print &left, const print &right) noexcept
-    {
-        return (left.message == right.message);
-    }
-
     std::ostream &operator<<(std::ostream &out, const call &value)
     {
         if (value.callee)
