@@ -5,8 +5,9 @@ namespace
 {
     void test_formatter_roundtrip(std::string_view const &source)
     {
-        lpg::syntax::parser parser{
-            lpg::syntax::scanner{source}, [](lpg::syntax::parse_error const &error) { FAIL(error); }};
+        lpg::syntax::parser parser{lpg::syntax::scanner{source}, [](lpg::syntax::parse_error const &error) {
+                                       FAIL(error);
+                                   }};
         lpg::syntax::sequence const parsed = parser.parse_sequence(false, lpg::syntax::source_location{});
         std::ostringstream buffer;
         lpg::syntax::formatter formatter{buffer, 0};

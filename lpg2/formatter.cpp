@@ -81,7 +81,11 @@ namespace lpg::syntax
 
     void formatter::format_expression(expression const &value)
     {
-        std::visit([this](auto const &expression_) { this->format(expression_); }, value.value);
+        std::visit(
+            [this](auto const &expression_) {
+                this->format(expression_);
+            },
+            value.value);
     }
 
     void formatter::print_indentation(size_t const level)

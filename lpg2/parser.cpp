@@ -173,19 +173,31 @@ namespace lpg::syntax
 
     source_location get_location(expression const &tree)
     {
-        return std::visit(
-            overloaded{
-                [](string_literal_expression const &string) -> source_location { return string.location; },
-                [](identifier const &identifier_) -> source_location { return identifier_.location; },
-                [](call const &call_) -> source_location { return get_location(*call_.callee); },
-                [](sequence const &sequence_) -> source_location { return sequence_.location; },
-                [](declaration const &declaration_) -> source_location { return declaration_.name.location; },
-                [](keyword_expression const &keyword) -> source_location { return keyword.location; },
-                [](binary_operator_expression const &binary_operator) -> source_location {
-                    return get_location(*binary_operator.left);
-                },
-                [](binary_operator_literal_expression const &literal) -> source_location { return literal.location; }},
-            tree.value);
+        return std::visit(overloaded{[](string_literal_expression const &string) -> source_location {
+                                         return string.location;
+                                     },
+                                     [](identifier const &identifier_) -> source_location {
+                                         return identifier_.location;
+                                     },
+                                     [](call const &call_) -> source_location {
+                                         return get_location(*call_.callee);
+                                     },
+                                     [](sequence const &sequence_) -> source_location {
+                                         return sequence_.location;
+                                     },
+                                     [](declaration const &declaration_) -> source_location {
+                                         return declaration_.name.location;
+                                     },
+                                     [](keyword_expression const &keyword) -> source_location {
+                                         return keyword.location;
+                                     },
+                                     [](binary_operator_expression const &binary_operator) -> source_location {
+                                         return get_location(*binary_operator.left);
+                                     },
+                                     [](binary_operator_literal_expression const &literal) -> source_location {
+                                         return literal.location;
+                                     }},
+                          tree.value);
     }
 
     std::optional<non_comment> peek_next_non_comment(scanner &tokens)
@@ -201,7 +213,9 @@ namespace lpg::syntax
             token &peeked = *maybe_peeked;
             std::optional<non_comment> result =
                 std::visit(overloaded{
-                               [](comment const &) -> std::optional<non_comment> { return std::nullopt; },
+                               [](comment const &) -> std::optional<non_comment> {
+                                   return std::nullopt;
+                               },
                                [&peeked](auto value) -> std::optional<non_comment> {
                                    return non_comment{std::move(value), peeked.location};
                                },
@@ -382,46 +396,51 @@ namespace lpg::syntax
         }
 
         return std::visit(
-            overloaded{
-                [&left_side](identifier_token const &) -> std::optional<expression> { return std::move(left_side); },
-                [this, &left_side, &right_side](special_character character) -> std::optional<expression> {
-                    switch (character)
-                    {
-                    case special_character::left_parenthesis:
-                        return parse_call(std::move(left_side.value()));
-                    case special_character::right_parenthesis:
-                        return std::move(left_side);
-                    case special_character::left_brace:
-                        return std::move(left_side);
-                    case special_character::right_brace:
-                        return std::move(left_side);
-                    case special_character::slash:
-                        on_error(parse_error{"Can not have a slash here.", right_side->location});
-                        return std::nullopt;
-                    case special_character::assign:
-                        on_error(parse_error{"Can not have an assignment operator here.", right_side->location});
-                        return std::nullopt;
-                    case special_character::equals: {
-                        // pop the operator
-                        (void)tokens.pop();
-                        std::optional<expression> right_argument = parse_expression();
-                        if (!right_argument)
-                        {
-                            on_error(parse_error{
-                                "Binary operator requires a right-hand side argument", right_side->location});
-                            return std::move(left_side);
-                        }
-                        return expression{binary_operator_expression{
-                            binary_operator::equals, std::make_unique<expression>(std::move(*left_side)),
-                            std::make_unique<expression>(std::move(*right_argument))}};
-                    }
-                    case special_character::comma:
-                        return std::move(left_side);
-                    }
-                    LPG_UNREACHABLE();
-                },
-                [&left_side](string_literal const &) -> std::optional<expression> { return std::move(left_side); },
-                [&left_side](keyword const) -> std::optional<expression> { return std::move(left_side); }},
+            overloaded{[&left_side](identifier_token const &) -> std::optional<expression> {
+                           return std::move(left_side);
+                       },
+                       [this, &left_side, &right_side](special_character character) -> std::optional<expression> {
+                           switch (character)
+                           {
+                           case special_character::left_parenthesis:
+                               return parse_call(std::move(left_side.value()));
+                           case special_character::right_parenthesis:
+                               return std::move(left_side);
+                           case special_character::left_brace:
+                               return std::move(left_side);
+                           case special_character::right_brace:
+                               return std::move(left_side);
+                           case special_character::slash:
+                               on_error(parse_error{"Can not have a slash here.", right_side->location});
+                               return std::nullopt;
+                           case special_character::assign:
+                               on_error(parse_error{"Can not have an assignment operator here.", right_side->location});
+                               return std::nullopt;
+                           case special_character::equals: {
+                               // pop the operator
+                               (void)tokens.pop();
+                               std::optional<expression> right_argument = parse_expression();
+                               if (!right_argument)
+                               {
+                                   on_error(parse_error{
+                                       "Binary operator requires a right-hand side argument", right_side->location});
+                                   return std::move(left_side);
+                               }
+                               return expression{binary_operator_expression{
+                                   binary_operator::equals, std::make_unique<expression>(std::move(*left_side)),
+                                   std::make_unique<expression>(std::move(*right_argument))}};
+                           }
+                           case special_character::comma:
+                               return std::move(left_side);
+                           }
+                           LPG_UNREACHABLE();
+                       },
+                       [&left_side](string_literal const &) -> std::optional<expression> {
+                           return std::move(left_side);
+                       },
+                       [&left_side](keyword const) -> std::optional<expression> {
+                           return std::move(left_side);
+                       }},
             right_side->content);
     }
 

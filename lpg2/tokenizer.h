@@ -140,7 +140,11 @@ namespace std
     template <class... T>
     std::ostream &operator<<(std::ostream &out, const std::variant<T...> &value)
     {
-        std::visit([&out, &value](const auto &element) { out << value.index() << ": " << element; }, value);
+        std::visit(
+            [&out, &value](const auto &element) {
+                out << value.index() << ": " << element;
+            },
+            value);
         return out;
     }
 
