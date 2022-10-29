@@ -47,8 +47,9 @@ let a = "Hello world")",
 
 TEST_CASE("argument_type_mismatch")
 {
-    expect_semantic_errors(R"aaa(print(print))aaa", {lpg::semantics::semantic_error{
-                                                        "Argument type mismatch", lpg::syntax::source_location{0, 6}}});
+    expect_semantic_errors(
+        R"aaa(print(print))aaa",
+        {lpg::semantics::semantic_error{"Argument type mismatch", lpg::syntax::source_location{0, 6}}});
 }
 
 TEST_CASE("not_comparable")

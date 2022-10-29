@@ -71,3 +71,5 @@ BraceWrapping:
   AfterControlStatement: true
   IndentBraces: false
   BeforeElse: true
+PenaltyIndentedWhitespace: 1
+PenaltyReturnTypeOnItsOwnLine: 120

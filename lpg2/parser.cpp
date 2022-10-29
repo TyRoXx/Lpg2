@@ -173,31 +173,33 @@ namespace lpg::syntax
 
     source_location get_location(expression const &tree)
     {
-        return std::visit(overloaded{[](string_literal_expression const &string) -> source_location {
-                                         return string.location;
-                                     },
-                                     [](identifier const &identifier_) -> source_location {
-                                         return identifier_.location;
-                                     },
-                                     [](call const &call_) -> source_location {
-                                         return get_location(*call_.callee);
-                                     },
-                                     [](sequence const &sequence_) -> source_location {
-                                         return sequence_.location;
-                                     },
-                                     [](declaration const &declaration_) -> source_location {
-                                         return declaration_.name.location;
-                                     },
-                                     [](keyword_expression const &keyword) -> source_location {
-                                         return keyword.location;
-                                     },
-                                     [](binary_operator_expression const &binary_operator) -> source_location {
-                                         return get_location(*binary_operator.left);
-                                     },
-                                     [](binary_operator_literal_expression const &literal) -> source_location {
-                                         return literal.location;
-                                     }},
-                          tree.value);
+        return std::visit(
+            overloaded{
+                [](string_literal_expression const &string) -> source_location {
+                    return string.location;
+                },
+                [](identifier const &identifier_) -> source_location {
+                    return identifier_.location;
+                },
+                [](call const &call_) -> source_location {
+                    return get_location(*call_.callee);
+                },
+                [](sequence const &sequence_) -> source_location {
+                    return sequence_.location;
+                },
+                [](declaration const &declaration_) -> source_location {
+                    return declaration_.name.location;
+                },
+                [](keyword_expression const &keyword) -> source_location {
+                    return keyword.location;
+                },
+                [](binary_operator_expression const &binary_operator) -> source_location {
+                    return get_location(*binary_operator.left);
+                },
+                [](binary_operator_literal_expression const &literal) -> source_location {
+                    return literal.location;
+                }},
+            tree.value);
     }
 
     std::optional<non_comment> peek_next_non_comment(scanner &tokens)
@@ -211,16 +213,16 @@ namespace lpg::syntax
             }
 
             token &peeked = *maybe_peeked;
-            std::optional<non_comment> result =
-                std::visit(overloaded{
-                               [](comment const &) -> std::optional<non_comment> {
-                                   return std::nullopt;
-                               },
-                               [&peeked](auto value) -> std::optional<non_comment> {
-                                   return non_comment{std::move(value), peeked.location};
-                               },
-                           },
-                           peeked.content);
+            std::optional<non_comment> result = std::visit(
+                overloaded{
+                    [](comment const &) -> std::optional<non_comment> {
+                        return std::nullopt;
+                    },
+                    [&peeked](auto value) -> std::optional<non_comment> {
+                        return non_comment{std::move(value), peeked.location};
+                    },
+                },
+                peeked.content);
 
             if (result.has_value())
             {
@@ -269,17 +271,18 @@ namespace lpg::syntax
             return std::make_tuple(std::nullopt, tokens.next_location);
         }
 
-        return std::make_tuple(std::visit(overloaded{
-                                              [](identifier_token &&identifier_) -> std::optional<identifier_token> {
-                                                  return std::move(identifier_);
-                                              },
-                                              [this, &token](auto &&) -> std::optional<identifier_token> {
-                                                  on_error(parse_error({"Expected identifier", token->location}));
-                                                  return std::nullopt;
-                                              },
-                                          },
-                                          std::move(token->content)),
-                               token->location);
+        return std::make_tuple(
+            std::visit(overloaded{
+                           [](identifier_token &&identifier_) -> std::optional<identifier_token> {
+                               return std::move(identifier_);
+                           },
+                           [this, &token](auto &&) -> std::optional<identifier_token> {
+                               on_error(parse_error({"Expected identifier", token->location}));
+                               return std::nullopt;
+                           },
+                       },
+                       std::move(token->content)),
+            token->location);
     }
 
     std::optional<declaration> parser::parse_declaration()

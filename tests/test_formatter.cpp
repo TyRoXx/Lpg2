@@ -59,11 +59,12 @@ TEST_CASE("format_block")
     test_formatter_roundtrip("let a = {\n"
                              "    print(\"test\")\n"
                              "}\n");
-    test_formatter_roundtrip("let a = {\n"
-                             "    {\n"
-                             "        {\n"
-                             "        }\n"
-                             "        print(\"test\")\n"
-                             "    }\n"
-                             "}\n");
+    test_formatter_roundtrip(
+        "let a = {\n"
+        "    {\n"
+        "        {\n"
+        "        }\n"
+        "        print(\"test\")\n"
+        "    }\n"
+        "}\n");
 }

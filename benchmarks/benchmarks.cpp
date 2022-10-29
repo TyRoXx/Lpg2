@@ -12,9 +12,10 @@ static void benchmark_store_blob(benchmark::State &state)
 
 static void benchmark_tokenizer(benchmark::State &state)
 {
-    const char *const string = "print(\"Hello\")"
-                               "()"
-                               "\"Testing\"";
+    const char *const string =
+        "print(\"Hello\")"
+        "()"
+        "\"Testing\"";
     size_t i = 0;
     for (auto _ : state)
     {

@@ -52,10 +52,11 @@ TEST_CASE("let_followed_by_non_identifier")
 
 TEST_CASE("declaration_missing_assignment")
 {
-    expect_compilation_error("let a",
-                             {lpg::syntax::parse_error{"Expected special character but got end of stream",
-                                                       lpg::syntax::source_location{0, 5}}},
-                             lpg::syntax::sequence{{}, lpg::syntax::source_location{0, 0}});
+    expect_compilation_error(
+        "let a",
+        {lpg::syntax::parse_error{
+            "Expected special character but got end of stream", lpg::syntax::source_location{0, 5}}},
+        lpg::syntax::sequence{{}, lpg::syntax::source_location{0, 0}});
 }
 
 TEST_CASE("declaration_with_incorrect_operator")
@@ -69,9 +70,9 @@ TEST_CASE("declaration_with_incorrect_operator")
 
 TEST_CASE("unterminated_string")
 {
-    expect_compilation_error(R"("Hello world)",
-                             {lpg::syntax::parse_error{"Tokenization failed", lpg::syntax::source_location{0, 0}}},
-                             lpg::syntax::sequence{{}, lpg::syntax::source_location{0, 0}});
+    expect_compilation_error(
+        R"("Hello world)", {lpg::syntax::parse_error{"Tokenization failed", lpg::syntax::source_location{0, 0}}},
+        lpg::syntax::sequence{{}, lpg::syntax::source_location{0, 0}});
 }
 
 TEST_CASE("mismatching_closing_parenthesis")
