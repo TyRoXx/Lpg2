@@ -1,4 +1,3 @@
-#define CATCH_CONFIG_MAIN
 #include "lpg2/type_checker.h"
 #include <catch2/catch_test_macros.hpp>
 

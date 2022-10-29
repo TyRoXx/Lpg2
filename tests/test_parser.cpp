@@ -4,7 +4,7 @@
 
 namespace
 {
-    void expect_compilation_error(const std::string program,
+    void expect_compilation_error(const std::string_view &program,
                                   const std::vector<lpg::syntax::parse_error> expected_errors,
                                   lpg::syntax::sequence const &expected_program)
     {
