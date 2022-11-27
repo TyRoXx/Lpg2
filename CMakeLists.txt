@@ -64,7 +64,7 @@ endif()
 if(MSVC)
     add_definitions(/std:c++20)
     # disable the useless "warnings"
-    add_definitions(/Wall /WX /wd5045 /wd4514 /wd4711 /wd4710 /wd4820 /wd5031 /wd4625 /wd4626 /wd5027 /wd4464 /wd4668 /wd4623 /wd5243 /wd4619 /wd5026 /wd4266 /wd4371 /wd4866 /wd4868)
+    add_definitions(/Wall /WX /wd5262 /wd5045 /wd4514 /wd4711 /wd4710 /wd4820 /wd5031 /wd4625 /wd4626 /wd5027 /wd4464 /wd4668 /wd4623 /wd5243 /wd4619 /wd5026 /wd4266 /wd4371 /wd4866 /wd4868)
     # 'return': conversion from '__int64' to 'size_t', signed/unsigned mismatch
     add_definitions(/wd4365)
 endif()
