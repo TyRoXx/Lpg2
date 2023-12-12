@@ -27,7 +27,7 @@ if(UNIX)
 endif()
 
 set(Boost_USE_STATIC_LIBS ON)
-find_package(Boost COMPONENTS system filesystem REQUIRED)
+find_package(Boost COMPONENTS system REQUIRED)
 
 add_definitions(-DBENCHMARK_STATIC_DEFINE)
 find_package(benchmark REQUIRED)
