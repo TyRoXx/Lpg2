@@ -73,7 +73,7 @@ namespace lpg::syntax
 
     std::ostream &operator<<(std::ostream &out, const sequence &value)
     {
-        out << value.location << ':{';
+        out << value.location << ":{";
         for (size_t i = 0; i < value.elements.size(); ++i)
         {
             if (i > 0)
