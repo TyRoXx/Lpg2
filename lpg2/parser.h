@@ -71,15 +71,15 @@ namespace lpg::syntax
 
     std::ostream &operator<<(std::ostream &out, const string_literal_expression &value);
 
-    struct keyword_expression
+    struct bool_literal_expression
     {
-        keyword which;
+        boolean_literal literal;
         source_location location;
 
-        std::weak_ordering operator<=>(keyword_expression const &other) const noexcept = default;
+        std::weak_ordering operator<=>(bool_literal_expression const &other) const noexcept = default;
     };
 
-    std::ostream &operator<<(std::ostream &out, const keyword_expression &value);
+    std::ostream &operator<<(std::ostream &out, const bool_literal_expression &value);
 
     enum class binary_operator
     {
@@ -110,7 +110,7 @@ namespace lpg::syntax
 
     struct expression
     {
-        std::variant<string_literal_expression, identifier, call, sequence, declaration, keyword_expression,
+        std::variant<string_literal_expression, identifier, call, sequence, declaration, bool_literal_expression,
                      binary_operator_expression, binary_operator_literal_expression>
             value;
     };

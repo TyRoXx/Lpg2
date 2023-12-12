@@ -13,7 +13,7 @@ namespace lpg::syntax
         void format(call const &value);
         void format(sequence const &value);
         void format(declaration const &value);
-        void format(keyword_expression const &value);
+        void format(bool_literal_expression const &value);
         void format(binary_operator_expression const &value);
         void format(binary_operator_literal_expression const &value);
         void format_expression(expression const &value);

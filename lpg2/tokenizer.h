@@ -63,6 +63,15 @@ namespace lpg::syntax
 
     std::ostream &operator<<(std::ostream &out, const string_literal &value);
 
+    struct boolean_literal
+    {
+        bool inner_content;
+
+        std::weak_ordering operator<=>(boolean_literal const &other) const noexcept = default;
+    };
+
+    std::ostream &operator<<(std::ostream &out, const boolean_literal &value);
+
     struct comment
     {
         std::string_view inner_content;

@@ -54,17 +54,9 @@ namespace lpg::syntax
         format_expression(*value.initializer);
     }
 
-    void formatter::format(keyword_expression const &value)
+    void formatter::format(bool_literal_expression const &value)
     {
-        switch (value.which)
-        {
-        case keyword::true_:
-            output << "true";
-            break;
-        case keyword::false_:
-            output << "false";
-            break;
-        }
+        output << value.literal;
     }
 
     void formatter::format(binary_operator_expression const &value)

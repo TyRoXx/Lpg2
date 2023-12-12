@@ -121,9 +121,9 @@ namespace lpg::syntax
         return out << value.location << ":" << value.literal;
     }
 
-    std::ostream &operator<<(std::ostream &out, const keyword_expression &value)
+    std::ostream &operator<<(std::ostream &out, const bool_literal_expression &value)
     {
-        return out << value.location << ":" << value.which;
+        return out << value.location << ":" << value.literal;
     }
 
     std::ostream &operator<<(std::ostream &out, binary_operator value)
@@ -180,8 +180,8 @@ namespace lpg::syntax
                 [](declaration const &declaration_) -> source_location {
                     return declaration_.name.location;
                 },
-                [](keyword_expression const &keyword) -> source_location {
-                    return keyword.location;
+                [](bool_literal_expression const &boolean) -> source_location {
+                    return boolean.location;
                 },
                 [](binary_operator_expression const &binary_operator) -> source_location {
                     return get_location(*binary_operator.left);
@@ -378,7 +378,14 @@ namespace lpg::syntax
                     return expression{string_literal_expression{literal, next_token->location}};
                 },
                 [&next_token](keyword const keyword_) -> std::optional<expression> {
-                    return expression{keyword_expression{keyword_, next_token->location}};
+                    switch (keyword_)
+                    {
+                    case keyword::true_:
+                        return expression{bool_literal_expression{boolean_literal{true}, next_token->location}};
+                    case keyword::false_:
+                        return expression{bool_literal_expression{boolean_literal{false}, next_token->location}};
+                    }
+                    LPG_UNREACHABLE();
                 }},
             next_token->content);
 

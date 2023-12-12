@@ -30,6 +30,20 @@ namespace lpg::syntax
         return out << '"' << value.inner_content << '"';
     }
 
+    std::ostream &operator<<(std::ostream &out, const boolean_literal &value)
+    {
+        if (value.inner_content)
+        {
+            out << "true";
+        }
+        else
+        {
+            out << "false";
+        }
+
+        return out;
+    }
+
     std::ostream &operator<<(std::ostream &out, const comment &value)
     {
         return out << "/*" << value.inner_content << "*/";

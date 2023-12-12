@@ -166,17 +166,10 @@ namespace lpg::semantics
                         output.elements.emplace_back(void_literal{void_id});
                         return void_id;
                     },
-                    [&checker, &output](syntax::keyword_expression const &keyword_input) -> local_id {
+                    [&checker, &output](syntax::bool_literal_expression const &bool_input) -> local_id {
                         local_id const result_id = checker.allocate_local(type::boolean);
-                        switch (keyword_input.which)
-                        {
-                        case syntax::keyword::true_:
-                            output.elements.emplace_back(boolean_literal{result_id, true});
-                            break;
-                        case syntax::keyword::false_:
-                            output.elements.emplace_back(boolean_literal{result_id, false});
-                            break;
-                        }
+                        output.elements.emplace_back(boolean_literal{result_id, bool_input.literal.inner_content});
+
                         return result_id;
                     },
                     [&checker, &output](syntax::binary_operator_expression const &binary_operator_input) -> local_id {
