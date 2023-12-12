@@ -1,1 +1,1 @@
-boost-outcome ms-gsl benchmark catch2
+boost-outcome boost-system ms-gsl benchmark catch2
