@@ -1,1 +1,1 @@
-boost-system boost-test boost-outcome boost-filesystem ms-gsl benchmark
+boost-outcome ms-gsl benchmark catch2
