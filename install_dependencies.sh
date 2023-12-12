@@ -39,7 +39,7 @@ mv install.temp install || exit 1
 popd || exit 1
 
 pushd vcpkg || exit 1
-export CC=gcc-8
-export CXX=g++-8
+export CC=gcc
+export CXX=g++
 ./bootstrap-vcpkg.sh || exit 1
 ./vcpkg install `cat ../vcpkg_dependencies` || exit 1

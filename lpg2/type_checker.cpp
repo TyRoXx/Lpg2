@@ -212,7 +212,7 @@ namespace lpg::semantics
 
     sequence check_types(syntax::sequence const &input, semantic_error_handler on_error)
     {
-        type_checker checker{{}, move(on_error)};
+        type_checker checker{{}, move(on_error), {}};
         sequence result;
         (void)check_sequence(checker, input, result);
         return result;
