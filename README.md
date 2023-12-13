@@ -15,6 +15,8 @@
 
 * install GCC
 * install ninja
+* install perl
+* install Firefox
 * clone recursively
 * run ./configure.sh
   * fix the things that don't work because C++ development is a house of cards (which is one reason why we try to develop a better language)
@@ -26,3 +28,9 @@
 * install clang-format-14
 * run CMake
 * ninja should format the C++ source files automatically when you build the project
+
+## Code coverage
+
+* open the build directory ../build-Lpg2
+* ninja testcoverage
+* if it works (which is unlikely), ninja will open Firefox with an HTML coverage report
