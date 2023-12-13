@@ -16,10 +16,10 @@ if(UNIX)
         add_custom_target(testcoverage
             COMMAND
                 find ${CMAKE_CURRENT_BINARY_DIR} -type f -name '*.gcda' -delete &&
-                $<TARGET_FILE:tests> --run_test=* &&
-                ${DEPENDENCIES_INSTALL_DIR}/bin/lcov --capture --no-external --gcov-tool /usr/bin/gcov-8 --directory ${CMAKE_CURRENT_SOURCE_DIR} --directory ${CMAKE_CURRENT_BINARY_DIR} --output-file coverage.info &&
-                ${DEPENDENCIES_INSTALL_DIR}/bin/lcov --remove coverage.info '${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/*' --gcov-tool /usr/bin/gcov-8 --output-file coverage.info &&
-                ${DEPENDENCIES_INSTALL_DIR}/bin/genhtml coverage.info --output-directory coverage-html &&
+                $<TARGET_FILE:tests> &&
+                ${DEPENDENCIES_INSTALL_DIR}/bin/lcov --capture --no-external --gcov-tool /usr/bin/gcov-11 --config-file ${CMAKE_CURRENT_SOURCE_DIR}/lcovrc --directory ${CMAKE_CURRENT_SOURCE_DIR} --directory ${CMAKE_CURRENT_BINARY_DIR} --output-file coverage.info &&
+                ${DEPENDENCIES_INSTALL_DIR}/bin/lcov --remove coverage.info '${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/*' --gcov-tool /usr/bin/gcov-11 --config-file ${CMAKE_CURRENT_SOURCE_DIR}/lcovrc --output-file coverage.info &&
+                ${DEPENDENCIES_INSTALL_DIR}/bin/genhtml coverage.info --config-file ${CMAKE_CURRENT_SOURCE_DIR}/lcovrc --output-directory coverage-html &&
                 firefox coverage-html/index.html
             WORKING_DIRECTORY ${CMAKE_CURRENT_BUILD_DIR})
         add_dependencies(testcoverage tests)
