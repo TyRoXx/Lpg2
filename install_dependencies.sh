@@ -43,3 +43,4 @@ export CC=gcc
 export CXX=g++
 ./bootstrap-vcpkg.sh || exit 1
 ./vcpkg install `cat ../vcpkg_dependencies` || exit 1
+./vcpkg upgrade --no-dry-run || exit 1
