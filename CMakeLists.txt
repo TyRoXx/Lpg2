@@ -17,7 +17,7 @@ if(UNIX)
             COMMAND
                 find ${CMAKE_CURRENT_BINARY_DIR} -type f -name '*.gcda' -delete &&
                 $<TARGET_FILE:tests> &&
-                ${DEPENDENCIES_INSTALL_DIR}/bin/lcov --capture --no-external --gcov-tool /usr/bin/gcov-11 --config-file ${CMAKE_CURRENT_SOURCE_DIR}/lcovrc --directory ${CMAKE_CURRENT_SOURCE_DIR} --directory ${CMAKE_CURRENT_BINARY_DIR} --output-file coverage.info &&
+                ${DEPENDENCIES_INSTALL_DIR}/bin/lcov --capture --gcov-tool /usr/bin/gcov-11 --config-file ${CMAKE_CURRENT_SOURCE_DIR}/lcovrc --directory ${CMAKE_CURRENT_BINARY_DIR} --output-file coverage.info &&
                 ${DEPENDENCIES_INSTALL_DIR}/bin/lcov --remove coverage.info '${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/*' --gcov-tool /usr/bin/gcov-11 --config-file ${CMAKE_CURRENT_SOURCE_DIR}/lcovrc --output-file coverage.info &&
                 ${DEPENDENCIES_INSTALL_DIR}/bin/genhtml coverage.info --config-file ${CMAKE_CURRENT_SOURCE_DIR}/lcovrc --output-directory coverage-html &&
                 firefox coverage-html/index.html
